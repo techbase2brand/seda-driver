@@ -42,7 +42,10 @@ const orderId = route?.params?.orderId;
     setOrder(data);
   };
 
-  const customer = JSON.parse(order?.customer_details);
+const customer =
+  typeof order?.customer_details === 'string'
+    ? JSON.parse(order.customer_details)
+    : order?.customer_details;
   console.log("singleorder>>",order,customer);
 const formatDate = (dateString) => {
   if (!dateString) return '-';
