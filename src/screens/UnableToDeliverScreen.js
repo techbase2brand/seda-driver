@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { supabase } from '../lib/supabase';
 
 const COLORS = {
   RED: '#FF0033',
@@ -24,68 +25,79 @@ const COLORS = {
   DISABLED: '#E0E0E0',
 };
 
-export default function UnableToDeliverScreen({ navigation }) {
+export default function UnableToDeliverScreen({ navigation, route }) {
   const [reason, setReason] = useState('');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState(null);
+  const [loading, setLoading] = useState(false);
 
+  const order = route?.params?.order;
+  const OrderId = order?.id;
+
+  const customer =
+    typeof order?.customer_details === 'string'
+      ? JSON.parse(order.customer_details)
+      : order?.customer_details;
   /* ========== IMAGE PICKERS ========== */
 
-  const openCamera = () => {
-    launchCamera({ mediaType: 'photo', quality: 0.7 }, response => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        Alert.alert('Camera Error', response.errorMessage);
+  const handleSubmit = async () => {
+    try {
+      setLoading(true);
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          unable_to_deliver_reason: reason || null,
+          unable_to_deliver_note: notes || null,
+          deliveryStatus: 'cancelled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', OrderId);
+
+      if (updateError) {
+        console.log('UPDATE ERROR:', updateError);
+        Alert.alert('Error', 'Order update failed');
         return;
       }
-      setPhoto(response.assets[0]);
-    });
-  };
 
-  const openGallery = () => {
-    launchImageLibrary({ mediaType: 'photo', quality: 0.7 }, response => {
-      if (response.didCancel) return;
-      if (response.errorCode) {
-        Alert.alert('Gallery Error', response.errorMessage);
-        return;
-      }
-      setPhoto(response.assets[0]);
-    });
+      // Alert.alert('Success', 'Order marked as delivered');
+      navigation.goBack();
+    } catch (err) {
+      console.log('CATCH ERROR:', err);
+      Alert.alert('Error', 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
   };
-
   const isSubmitEnabled = reason.trim().length > 0;
 
   return (
     <View style={styles.container}>
       {/* HEADER */}
-        <View style={{ position: 'relative', marginBottom: 40 }}>
-
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Icon name="arrow-back" size={22} color={COLORS.WHITE} />
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerTitle}>Unable to Deliver</Text>
-          <Text style={styles.headerSub}>ORD-2025-004</Text>
+      <View style={{ position: 'relative', marginBottom: 40 }}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Icon name="arrow-back" size={22} color={COLORS.WHITE} />
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerTitle}>Unable to Deliver</Text>
+            <Text style={styles.headerSub}>{order?.order_name}</Text>
+          </View>
         </View>
-      </View>
 
-      {/* DELIVERY INFO */}
+        {/* DELIVERY INFO */}
         <View style={styles.card}>
           <View style={styles.iconBox}>
             <Icon name="alert-circle-outline" size={20} color={COLORS.WHITE} />
           </View>
           <View>
             <Text style={styles.smallLabel}>Unable to deliver to</Text>
-            <Text style={styles.boldText}>Sunset Restaurant Group</Text>
-            <Text style={styles.smallText}>Sarah Johnson</Text>
+            <Text style={styles.boldText}>{customer?.company_name}</Text>
+            <Text style={styles.smallText}>{customer?.first_name}</Text>
           </View>
         </View>
-        </View>
+      </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        
-
         {/* WARNING */}
         <View style={styles.warningBox}>
           <Icon name="alert-circle-outline" size={18} color={COLORS.ERROR} />
@@ -112,36 +124,6 @@ export default function UnableToDeliverScreen({ navigation }) {
           E.g. "Customer not available", "Wrong address", "Business closed"
         </Text>
 
-        {/* PHOTO OPTIONAL */}
-        <Text style={styles.sectionTitle}>Photo (Optional)</Text>
-        <View style={styles.photoBox}>
-          {photo ? (
-            <Image source={{ uri: photo.uri }} style={styles.previewImage} />
-          ) : (
-            <>
-              <Icon
-                name="camera-outline"
-                size={32}
-                color={COLORS.PLACEHOLDER}
-              />
-              <Text style={styles.noPhotoText}>No photo uploaded</Text>
-              <Text style={styles.helperText}>Optional supporting photo</Text>
-            </>
-          )}
-        </View>
-
-        <View style={styles.photoActions}>
-          <TouchableOpacity style={styles.outlineBtn} onPress={openCamera}>
-            <Icon name="camera-outline" size={16} />
-            <Text> Take Photo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.outlineBtn} onPress={openGallery}>
-            <Icon name="image-outline" size={16} />
-            <Text> Upload</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* NOTES */}
         <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
         <TextInput
@@ -157,13 +139,14 @@ export default function UnableToDeliverScreen({ navigation }) {
         <TouchableOpacity
           disabled={!isSubmitEnabled}
           style={[styles.submitBtn, !isSubmitEnabled && styles.submitDisabled]}
+          onPress={handleSubmit}
         >
           <Text
             style={{
               color: isSubmitEnabled ? COLORS.WHITE : COLORS.PLACEHOLDER,
             }}
           >
-            Submit Unable to Deliver Report
+            {loading ? 'Submitting...' : 'Submit Unable to Deliver Report'}
           </Text>
         </TouchableOpacity>
 
@@ -191,7 +174,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-   
   },
   headerTitle: {
     color: COLORS.WHITE,

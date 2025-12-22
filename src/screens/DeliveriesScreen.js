@@ -185,7 +185,6 @@ const DeliveriesScreen = ({ navigation }) => {
 
   useEffect(() => {
     let isMounted = true;
-
     const init = async () => {
       setLoading(true);
       const ids = await loadIdsFromStorage();
@@ -244,11 +243,11 @@ const DeliveriesScreen = ({ navigation }) => {
       <View style={{ position: 'relative', marginBottom: 100 }}>
         <DeliveriesHeader navigation={navigation} onLogout={onLogout} />
         <View style={{ position: 'absolute', top: '75%' }}>
-          <MarkAllTransitCard />
+          <MarkAllTransitCard orders={orders} />
         </View>
       </View>
 
-      <DeliveryStats orders={orders?.length} />
+      <DeliveryStats orders={orders} />
 
       <View style={{ padding: 16, flex: 1 }}>
         <Text style={styles.title}>Active Deliveries</Text>

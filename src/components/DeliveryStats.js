@@ -15,23 +15,26 @@ const StatCard = ({ icon, value, label, bg }) => (
 );
 
 const DeliveryStats = ({ orders }) => {
+  const completedOrdersCount = orders?.filter(
+  item => item?.deliveryStatus == "completed"
+)?.length;
   return (
     <View style={styles.row}>
       <StatCard
         icon="cube-outline"
-        value={orders}
+        value={orders?.length}
         label="Assigned"
         bg="#0A4DFF"
       />
       <StatCard
         icon="trending-up-outline"
-        value={DELIVERY_SUMMARY.inProgress}
+        value={orders?.length}
         label="In Progress"
         bg="#4AA3DF"
       />
       <StatCard
         icon="checkmark-circle-outline"
-        value={DELIVERY_SUMMARY.delivered}
+        value={completedOrdersCount}
         label="Delivered"
         bg="#16A34A"
       />

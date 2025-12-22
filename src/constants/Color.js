@@ -15,5 +15,6 @@ export default {
   textGray: '#6B7280',
   cardBg: '#F9FAFB',
   shadow: '#00000020',
+  DISABLED: '#E0E0E0',
 };
 

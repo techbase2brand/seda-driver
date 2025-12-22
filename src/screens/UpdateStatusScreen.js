@@ -1,3 +1,387 @@
+// import React, { useState } from 'react';
+// import {
+//   View,
+//   Text,
+//   StyleSheet,
+//   TextInput,
+//   TouchableOpacity,
+//   ScrollView,
+//   Image,
+//   Alert,
+// } from 'react-native';
+// import Icon from 'react-native-vector-icons/Ionicons';
+// import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+// import COLORS from '../constants/Color';
+
+// export default function UpdateStatusScreen({ navigation, route }) {
+
+//   const [recipient, setRecipient] = useState('');
+//   const [notes, setNotes] = useState('');
+//   const [photo, setPhoto] = useState(null);
+// const customer =
+//   typeof route?.params?.order?.customer_details === 'string'
+//     ? JSON.parse(route?.params?.order.customer_details)
+//     : route?.params?.order?.customer_details;
+// const OrderId =route?.params?.order?.id
+//   console.log("customer>>",OrderId);
+//   console.log("customer>>",route?.params?.order);
+
+//   /* ================= IMAGE PICKERS ================= */
+
+//   const openCamera = () => {
+//     launchCamera(
+//       {
+//         mediaType: 'photo',
+//         quality: 0.7,
+//         saveToPhotos: true,
+//       },
+//       response => {
+//         if (response.didCancel) return;
+//         if (response.errorCode) {
+//           Alert.alert('Camera Error', response.errorMessage);
+//           return;
+//         }
+//         setPhoto(response.assets[0]);
+//       },
+//     );
+//   };
+
+//   const openGallery = () => {
+//     launchImageLibrary(
+//       {
+//         mediaType: 'photo',
+//         quality: 0.7,
+//         selectionLimit: 1,
+//       },
+//       response => {
+//         if (response.didCancel) return;
+//         if (response.errorCode) {
+//           Alert.alert('Gallery Error', response.errorMessage);
+//           return;
+//         }
+//         setPhoto(response.assets[0]);
+//       },
+//     );
+//   };
+
+//   const isSubmitEnabled = !!photo;
+
+//   /* ================= UI ================= */
+
+//   return (
+//     <View style={styles.container}>
+//       {/* HEADER */}
+//       <View style={{ position: 'relative', marginBottom: 40 }}>
+//         <View style={styles.header}>
+//           <TouchableOpacity onPress={() => navigation.goBack()}>
+//             <Icon name="arrow-back" size={22} color={COLORS.WHITE} />
+//           </TouchableOpacity>
+//           <View>
+//             <Text style={styles.headerTitle}>Update Status</Text>
+//             <Text style={styles.headerSub}>{route?.params?.order?.order_name}</Text>
+//           </View>
+//         </View>
+//         {/* DELIVERY INFO */}
+//         <View style={styles.card}>
+//           <View style={styles.iconBox}>
+//             <Icon name="cube-outline" size={20} color={COLORS.WHITE} />
+//           </View>
+//           <View>
+//             <Text style={styles.smallLabel}>Delivering to</Text>
+//             <Text style={styles.boldText}>{customer?.company_name}</Text>
+//             <Text style={styles.smallText}>{customer?.first_name}</Text>
+//           </View>
+//         </View>
+//       </View>
+//       <ScrollView contentContainerStyle={styles.content}>
+//         {/* RECIPIENT */}
+//         <Text style={styles.sectionTitle}>Recipient Name (Optional)</Text>
+//         <View style={styles.inputBox}>
+//           <Text style={styles.inputLabel}>Who received the delivery?</Text>
+//           <TextInput
+//             placeholder="Enter recipient's full name"
+//             placeholderTextColor={COLORS.PLACEHOLDER}
+//             style={styles.input}
+//             value={recipient}
+//             onChangeText={setRecipient}
+//           />
+//           <Text style={styles.helperText}>
+//             Name of the person who accepted the delivery
+//           </Text>
+//         </View>
+
+//         {/* PHOTO */}
+//         <Text style={styles.sectionTitle}>Photo of Signed Invoice</Text>
+
+//         <View style={styles.photoBox}>
+//           {photo ? (
+//             <Image source={{ uri: photo.uri }} style={styles.previewImage} />
+//           ) : (
+//             <>
+//               <Icon
+//                 name="camera-outline"
+//                 size={34}
+//                 color={COLORS.PLACEHOLDER}
+//               />
+//               <Text style={styles.noPhotoText}>No photo uploaded</Text>
+//               <Text style={styles.helperText}>
+//                 Take a photo or upload from gallery
+//               </Text>
+//             </>
+//           )}
+//         </View>
+
+//         <View style={styles.photoActions}>
+//           <TouchableOpacity style={styles.outlineBtn} onPress={openCamera}>
+//             <Icon name="camera-outline" size={16} color={COLORS.PRIMARY} />
+//             <Text style={styles.outlineText}> Take Photo</Text>
+//           </TouchableOpacity>
+
+//           <TouchableOpacity
+//             style={[styles.outlineBtn, { borderColor: COLORS.PRIMARY_LOW }]}
+//             onPress={openGallery}
+//           >
+//             <Icon name="image-outline" size={16} color={COLORS.PRIMARY_LOW} />
+//             <Text style={[styles.outlineText, { color: COLORS.PRIMARY_LOW }]}>
+//               {' '}
+//               Upload
+//             </Text>
+//           </TouchableOpacity>
+//         </View>
+
+//         {/* NOTES */}
+//         <Text style={styles.sectionTitle}>Delivery Notes (Optional)</Text>
+//         <TextInput
+//           style={[styles.input, styles.textArea]}
+//           placeholder="Add any delivery notes or comments..."
+//           placeholderTextColor={COLORS.PLACEHOLDER}
+//           multiline
+//           value={notes}
+//           onChangeText={setNotes}
+//         />
+//         <Text style={styles.helperText}>
+//           E.g. "Left at front door", "Delivered to receptionist"
+//         </Text>
+
+//         {/* SUBMIT */}
+//         <TouchableOpacity
+//           disabled={!isSubmitEnabled}
+//           style={[styles.submitBtn, ]}
+//         >
+//           <Text
+//             style={{
+//               color:COLORS.WHITE ,
+//             }}
+//           >
+//             Submit Proof of Delivery
+//           </Text>
+//         </TouchableOpacity>
+
+//         {!photo && (
+//           <Text style={styles.errorText}>
+//             * Please upload a photo of the signed invoice
+//           </Text>
+//         )}
+
+//         {/* UNABLE TO DELIVER */}
+//         <TouchableOpacity style={styles.unableBtn} onPress={()=> navigation.navigate("UnableToDeliverScreen")}>
+//           <Icon name="alert-circle-outline" size={18} color={COLORS.ERROR} />
+//           <Text style={styles.unableText}> Unable to Deliver</Text>
+//         </TouchableOpacity>
+
+//         <Text style={styles.footerNote}>
+//           Once submitted, the customer and location admin will be notified
+//         </Text>
+//       </ScrollView>
+//     </View>
+//   );
+// }
+// const styles = StyleSheet.create({
+//   container: {
+//     flex: 1,
+//     backgroundColor: COLORS.BACKGROUND,
+//   },
+
+//   header: {
+//     backgroundColor: COLORS.PRIMARY,
+//     padding: 20,
+//     paddingTop: 50,
+//     paddingBottom: 55,
+//     flexDirection: 'row',
+//     alignItems: 'center',
+//     gap: 12,
+//     // borderBottomLeftRadius: 20,
+//     // borderBottomRightRadius: 20,
+//   },
+//   headerTitle: {
+//     color: COLORS.WHITE,
+//     fontSize: 18,
+//     fontWeight: '600',
+//   },
+//   headerSub: {
+//     color: COLORS.WHITE,
+//     fontSize: 12,
+//     marginTop: 2,
+//   },
+
+//   content: {
+//     padding: 16,
+//     position: 'relative',
+//   },
+
+//   card: {
+//     flexDirection: 'row',
+//     backgroundColor: COLORS.WHITE,
+//     padding: 14,
+//     borderRadius: 12,
+//     alignItems: 'center',
+//     marginBottom: 20,
+//     alignSelf: 'center',
+//     position: 'absolute',
+//     top: '75%',
+//     width: '94%',
+//     marginHorizontal: 20,
+//   },
+//   iconBox: {
+//     backgroundColor: COLORS.PRIMARY,
+//     padding: 10,
+//     borderRadius: 10,
+//     marginRight: 12,
+//   },
+
+//   sectionTitle: {
+//     fontWeight: '600',
+//     marginBottom: 8,
+//   },
+
+//   inputBox: {
+//     backgroundColor: COLORS.WHITE,
+//     padding: 12,
+//     borderRadius: 10,
+//     marginBottom: 16,
+//   },
+//   inputLabel: {
+//     fontSize: 12,
+//     color: COLORS.TEXT,
+//   },
+
+//   input: {
+//     borderWidth: 1,
+//     borderColor: COLORS.BORDER,
+//     borderRadius: 8,
+//     padding: 10,
+//     marginTop: 6,
+//     backgroundColor: COLORS.WHITE,
+//   },
+
+//   textArea: {
+//     height: 90,
+//     textAlignVertical: 'top',
+//   },
+
+//   helperText: {
+//     fontSize: 11,
+//     color: COLORS.PLACEHOLDER,
+//     marginTop: 6,
+//   },
+
+//   photoBox: {
+//     backgroundColor: '#F8F8F8',
+//     borderWidth: 1,
+//     borderStyle: 'dashed',
+//     borderColor: COLORS.BORDER,
+//     borderRadius: 10,
+//     alignItems: 'center',
+//     padding: 20,
+//   },
+
+//   previewImage: {
+//     width: '100%',
+//     height: 180,
+//     borderRadius: 10,
+//   },
+
+//   noPhotoText: {
+//     marginTop: 6,
+//     fontWeight: '500',
+//   },
+
+//   photoActions: {
+//     flexDirection: 'row',
+//     justifyContent: 'space-between',
+//     marginVertical: 12,
+//   },
+
+//   outlineBtn: {
+//     flex: 1,
+//     borderWidth: 1,
+//     borderColor: COLORS.PRIMARY,
+//     borderRadius: 8,
+//     padding: 10,
+//     alignItems: 'center',
+//     marginHorizontal: 4,
+//     flexDirection: 'row',
+//     justifyContent: 'center',
+//   },
+
+//   outlineText: {
+//     color: COLORS.PRIMARY,
+//     fontWeight: '500',
+//   },
+
+//   submitBtn: {
+//     backgroundColor: COLORS.PRIMARY,
+//     padding: 14,
+//     borderRadius: 10,
+//     alignItems: 'center',
+//     marginTop: 10,
+//   },
+
+//   submitDisabled: {
+//     backgroundColor: COLORS.DISABLED,
+//   },
+
+//   errorText: {
+//     color: COLORS.ERROR,
+//     fontSize: 11,
+//     marginVertical: 6,
+//   },
+
+//   unableBtn: {
+//     borderWidth: 1,
+//     borderColor: COLORS.ERROR,
+//     padding: 12,
+//     borderRadius: 10,
+//     alignItems: 'center',
+//     flexDirection: 'row',
+//     justifyContent: 'center',
+//     marginTop: 8,
+//   },
+
+//   unableText: {
+//     color: COLORS.ERROR,
+//     fontWeight: '600',
+//   },
+
+//   footerNote: {
+//     textAlign: 'center',
+//     fontSize: 11,
+//     color: COLORS.PLACEHOLDER,
+//     marginTop: 16,
+//   },
+
+//   smallLabel: {
+//     fontSize: 11,
+//     color: COLORS.PLACEHOLDER,
+//   },
+//   boldText: {
+//     fontWeight: '600',
+//   },
+//   smallText: {
+//     fontSize: 12,
+//     color: COLORS.PLACEHOLDER,
+//   },
+// });
 import React, { useState } from 'react';
 import {
   View,
@@ -12,68 +396,115 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import COLORS from '../constants/Color';
+import { supabase } from '../lib/supabase';
 
-// const COLORS = {
-//   PRIMARY: '#4FA3E3',
-//   BACKGROUND: '#F2F4F6',
-//   WHITE: '#FFFFFF',
-//   TEXT: '#1C1C1C',
-//   PLACEHOLDER: '#9E9E9E',
-//   ERROR: '#FF3B30',
-//   BORDER: '#E0E0E0',
-//   DISABLED: '#E0E0E0',
-// };
-
-export default function UpdateStatusScreen({ navigation }) {
+export default function UpdateStatusScreen({ navigation, route }) {
   const [recipient, setRecipient] = useState('');
   const [notes, setNotes] = useState('');
   const [photo, setPhoto] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  console.log('pjhtoo', route?.params?.order);
+
+  const order = route?.params?.order;
+  const OrderId = order?.id;
+
+  const customer =
+    typeof order?.customer_details === 'string'
+      ? JSON.parse(order.customer_details)
+      : order?.customer_details;
 
   /* ================= IMAGE PICKERS ================= */
 
   const openCamera = () => {
-    launchCamera(
-      {
-        mediaType: 'photo',
-        quality: 0.7,
-        saveToPhotos: true,
-      },
-      response => {
-        if (response.didCancel) return;
-        if (response.errorCode) {
-          Alert.alert('Camera Error', response.errorMessage);
-          return;
-        }
-        setPhoto(response.assets[0]);
-      },
-    );
+    launchCamera({ mediaType: 'photo', quality: 0.7 }, res => {
+      if (res.didCancel || res.errorCode) return;
+      setPhoto(res.assets[0]);
+    });
   };
 
   const openGallery = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        quality: 0.7,
-        selectionLimit: 1,
-      },
-      response => {
-        if (response.didCancel) return;
-        if (response.errorCode) {
-          Alert.alert('Gallery Error', response.errorMessage);
-          return;
-        }
-        setPhoto(response.assets[0]);
-      },
-    );
+    launchImageLibrary({ mediaType: 'photo', quality: 0.7 }, res => {
+      if (res.didCancel || res.errorCode) return;
+      setPhoto(res.assets[0]);
+    });
   };
 
-  const isSubmitEnabled = !!photo;
+  /* ================= HELPERS ================= */
 
-  /* ================= UI ================= */
+  const uriToArrayBuffer = async uri => {
+    const response = await fetch(uri);
+    return await response.arrayBuffer();
+  };
+
+  /* ================= SUBMIT ================= */
+
+  const handleSubmit = async () => {
+    if (!photo) {
+      Alert.alert('Error', 'Please upload delivery photo');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // iOS SAFE filename (fileName mostly null on iOS)
+      const ext =
+        photo.fileName?.split('.').pop() || photo.uri.split('.').pop() || 'jpg';
+
+      const fileName = `order-${OrderId}-${Date.now()}.${ext}`;
+      const filePath = `deliveries/${fileName}`;
+
+      const fileBuffer = await uriToArrayBuffer(photo.uri);
+
+      const { error: uploadError } = await supabase.storage
+        .from('order-proofs')
+        .upload(filePath, fileBuffer, {
+          contentType: photo.type || 'image/jpeg',
+          upsert: true,
+        });
+
+      if (uploadError) {
+        console.log('UPLOAD ERROR:', uploadError);
+        Alert.alert('Error', 'Image upload failed');
+        return;
+      }
+
+      const { data } = supabase.storage
+        .from('order-proofs')
+        .getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase
+        .from('orders')
+        .update({
+          recipient_name: recipient || null,
+          delivery_note: notes || null,
+          delivery_proof_image: data.publicUrl,
+          deliveryStatus: 'completed',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', OrderId);
+
+      if (updateError) {
+        console.log('UPDATE ERROR:', updateError);
+        Alert.alert('Error', 'Order update failed');
+        return;
+      }
+
+      Alert.alert('Success', 'Order marked as delivered');
+      navigation.goBack();
+    } catch (err) {
+      console.log('CATCH ERROR:', err);
+      Alert.alert('Error', 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* ================= UI (UNCHANGED) ================= */
 
   return (
     <View style={styles.container}>
-      {/* HEADER */}
       <View style={{ position: 'relative', marginBottom: 40 }}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -81,23 +512,23 @@ export default function UpdateStatusScreen({ navigation }) {
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Update Status</Text>
-            <Text style={styles.headerSub}>ORD-2025-005</Text>
+            <Text style={styles.headerSub}>{order?.order_name}</Text>
           </View>
         </View>
-        {/* DELIVERY INFO */}
+
         <View style={styles.card}>
           <View style={styles.iconBox}>
             <Icon name="cube-outline" size={20} color={COLORS.WHITE} />
           </View>
           <View>
             <Text style={styles.smallLabel}>Delivering to</Text>
-            <Text style={styles.boldText}>Martinez Trading Co.</Text>
-            <Text style={styles.smallText}>John Martinez</Text>
+            <Text style={styles.boldText}>{customer?.company_name}</Text>
+            <Text style={styles.smallText}>{customer?.first_name}</Text>
           </View>
         </View>
       </View>
+
       <ScrollView contentContainerStyle={styles.content}>
-        {/* RECIPIENT */}
         <Text style={styles.sectionTitle}>Recipient Name (Optional)</Text>
         <View style={styles.inputBox}>
           <Text style={styles.inputLabel}>Who received the delivery?</Text>
@@ -113,9 +544,7 @@ export default function UpdateStatusScreen({ navigation }) {
           </Text>
         </View>
 
-        {/* PHOTO */}
         <Text style={styles.sectionTitle}>Photo of Signed Invoice</Text>
-
         <View style={styles.photoBox}>
           {photo ? (
             <Image source={{ uri: photo.uri }} style={styles.previewImage} />
@@ -146,13 +575,11 @@ export default function UpdateStatusScreen({ navigation }) {
           >
             <Icon name="image-outline" size={16} color={COLORS.PRIMARY_LOW} />
             <Text style={[styles.outlineText, { color: COLORS.PRIMARY_LOW }]}>
-              {' '}
               Upload
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* NOTES */}
         <Text style={styles.sectionTitle}>Delivery Notes (Optional)</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
@@ -162,21 +589,17 @@ export default function UpdateStatusScreen({ navigation }) {
           value={notes}
           onChangeText={setNotes}
         />
-        <Text style={styles.helperText}>
-          E.g. "Left at front door", "Delivered to receptionist"
-        </Text>
 
-        {/* SUBMIT */}
         <TouchableOpacity
-          disabled={!isSubmitEnabled}
-          style={[styles.submitBtn, ]}
+          disabled={!photo || loading}
+          style={[
+            styles.submitBtn,
+            (!photo || loading) && styles.submitDisabled,
+          ]}
+          onPress={handleSubmit}
         >
-          <Text
-            style={{
-              color:COLORS.WHITE ,
-            }}
-          >
-            Submit Proof of Delivery
+          <Text style={{ color: COLORS.WHITE }}>
+            {loading ? 'Submitting...' : 'Submit Proof of Delivery'}
           </Text>
         </TouchableOpacity>
 
@@ -186,8 +609,12 @@ export default function UpdateStatusScreen({ navigation }) {
           </Text>
         )}
 
-        {/* UNABLE TO DELIVER */}
-        <TouchableOpacity style={styles.unableBtn} onPress={()=> navigation.navigate("UnableToDeliverScreen")}>
+        <TouchableOpacity
+          style={styles.unableBtn}
+          onPress={() =>
+            navigation.navigate('UnableToDeliverScreen', { orderId: OrderId })
+          }
+        >
           <Icon name="alert-circle-outline" size={18} color={COLORS.ERROR} />
           <Text style={styles.unableText}> Unable to Deliver</Text>
         </TouchableOpacity>
@@ -199,12 +626,10 @@ export default function UpdateStatusScreen({ navigation }) {
     </View>
   );
 }
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
-  },
 
+/* ================= STYLES UNCHANGED ================= */
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.BACKGROUND },
   header: {
     backgroundColor: COLORS.PRIMARY,
     padding: 20,
@@ -213,25 +638,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    // borderBottomLeftRadius: 20,
-    // borderBottomRightRadius: 20,
   },
-  headerTitle: {
-    color: COLORS.WHITE,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  headerSub: {
-    color: COLORS.WHITE,
-    fontSize: 12,
-    marginTop: 2,
-  },
-
-  content: {
-    padding: 16,
-    position: 'relative',
-  },
-
+  headerTitle: { color: COLORS.WHITE, fontSize: 18, fontWeight: '600' },
+  headerSub: { color: COLORS.WHITE, fontSize: 12, marginTop: 2 },
+  content: { padding: 16 },
   card: {
     flexDirection: 'row',
     backgroundColor: COLORS.WHITE,
@@ -243,7 +653,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: '75%',
     width: '94%',
-    marginHorizontal: 20,
   },
   iconBox: {
     backgroundColor: COLORS.PRIMARY,
@@ -251,23 +660,14 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 12,
   },
-
-  sectionTitle: {
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-
+  sectionTitle: { fontWeight: '600', marginBottom: 8 },
   inputBox: {
     backgroundColor: COLORS.WHITE,
     padding: 12,
     borderRadius: 10,
     marginBottom: 16,
   },
-  inputLabel: {
-    fontSize: 12,
-    color: COLORS.TEXT,
-  },
-
+  inputLabel: { fontSize: 12, color: COLORS.TEXT },
   input: {
     borderWidth: 1,
     borderColor: COLORS.BORDER,
@@ -276,18 +676,8 @@ const styles = StyleSheet.create({
     marginTop: 6,
     backgroundColor: COLORS.WHITE,
   },
-
-  textArea: {
-    height: 90,
-    textAlignVertical: 'top',
-  },
-
-  helperText: {
-    fontSize: 11,
-    color: COLORS.PLACEHOLDER,
-    marginTop: 6,
-  },
-
+  textArea: { height: 90, textAlignVertical: 'top' },
+  helperText: { fontSize: 11, color: COLORS.PLACEHOLDER, marginTop: 6 },
   photoBox: {
     backgroundColor: '#F8F8F8',
     borderWidth: 1,
@@ -297,24 +687,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
   },
-
-  previewImage: {
-    width: '100%',
-    height: 180,
-    borderRadius: 10,
-  },
-
-  noPhotoText: {
-    marginTop: 6,
-    fontWeight: '500',
-  },
-
+  previewImage: { width: '100%', height: 180, borderRadius: 10 },
+  noPhotoText: { marginTop: 6, fontWeight: '500' },
   photoActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 12,
   },
-
   outlineBtn: {
     flex: 1,
     borderWidth: 1,
@@ -326,12 +705,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
-
-  outlineText: {
-    color: COLORS.PRIMARY,
-    fontWeight: '500',
-  },
-
+  outlineText: { color: COLORS.PRIMARY, fontWeight: '500' },
   submitBtn: {
     backgroundColor: COLORS.PRIMARY,
     padding: 14,
@@ -339,17 +713,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 10,
   },
-
-  submitDisabled: {
-    backgroundColor: COLORS.DISABLED,
-  },
-
-  errorText: {
-    color: COLORS.ERROR,
-    fontSize: 11,
-    marginVertical: 6,
-  },
-
+  submitDisabled: { backgroundColor: COLORS.DISABLED },
+  errorText: { color: COLORS.ERROR, fontSize: 11, marginVertical: 6 },
   unableBtn: {
     borderWidth: 1,
     borderColor: COLORS.ERROR,
@@ -360,28 +725,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-
-  unableText: {
-    color: COLORS.ERROR,
-    fontWeight: '600',
-  },
-
+  unableText: { color: COLORS.ERROR, fontWeight: '600' },
   footerNote: {
     textAlign: 'center',
     fontSize: 11,
     color: COLORS.PLACEHOLDER,
     marginTop: 16,
   },
-
-  smallLabel: {
-    fontSize: 11,
-    color: COLORS.PLACEHOLDER,
-  },
-  boldText: {
-    fontWeight: '600',
-  },
-  smallText: {
-    fontSize: 12,
-    color: COLORS.PLACEHOLDER,
-  },
+  smallLabel: { fontSize: 11, color: COLORS.PLACEHOLDER },
+  boldText: { fontWeight: '600' },
+  smallText: { fontSize: 12, color: COLORS.PLACEHOLDER },
 });
+
+// Allow authenticated read
+
+// ((bucket_id = 'logos'::text) AND (auth.role() = 'authenticated'::text))
+
+// Allow authenticated uploads

@@ -6,7 +6,7 @@ import GradientButton from './GradientButton';
 
 const ActiveDeliveryCard = ({ item, navigation }) => {
   const handleNavigation = () => {
-    navigation.navigate('UpdateStatusScreen');
+    navigation.navigate('UpdateStatusScreen', { order: item });
   };
   const companyDetail = JSON.parse(item?.customer_details);
   return (
@@ -66,7 +66,9 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
         <GradientButton
           title="Unable to Deliver"
           colors={Colors.dangerGradient}
-          onPress={() => navigation.navigate('UnableToDeliverScreen')}
+          onPress={() =>
+            navigation.navigate('UnableToDeliverScreen', { order: item })
+          }
           icon={<Icon name="close-circle-outline" size={18} color="#fff" />}
         />
       </View>

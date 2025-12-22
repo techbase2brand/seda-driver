@@ -181,7 +181,6 @@
 //   },
 // });
 
-
 import React, { useState } from 'react';
 import {
   View,
@@ -225,83 +224,78 @@ const DeliveryLoginScreen = ({ navigation }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-const onLogin = async () => {
-  if (!validate()) return;
+  const onLogin = async () => {
+    if (!validate()) return;
 
-  setLoading(true);
-  setErrors({});
+    setLoading(true);
+    setErrors({});
 
-  try {
-    const cleanEmail = email.trim().toLowerCase();
+    try {
+      const cleanEmail = email.trim().toLowerCase();
 
-    /**
-     * 1️⃣ Driver table check
-     */
-    const { data: driver, error } = await supabase
-      .from('drivers')
-      .select('id,email,franchise_id,role,status')
-      .eq('email', cleanEmail)
-      .eq('role', 'Driver')
-      .single();
+      /**
+       * 1️⃣ Driver table check
+       */
+      const { data: driver, error } = await supabase
+        .from('drivers')
+        .select('id,email,franchise_id,role,status')
+        .eq('email', cleanEmail)
+        .eq('role', 'Driver')
+        .single();
 
-    console.log('DRIVER CHECK:', driver, error);
+      console.log('DRIVER CHECK:', driver, error);
 
-    if (error || !driver) {
-      setErrors({ email: 'Driver not found' });
-      setLoading(false);
-      return;
-    }
+      if (error || !driver) {
+        setErrors({ email: 'Driver not found' });
+        setLoading(false);
+        return;
+      }
 
-    /**
-     * 2️⃣ Supabase Auth login
-     */
-    const { data: authData, error: authError } =
-      await supabase.auth.signInWithPassword({
-        email: cleanEmail,
-        password: password,
+      /**
+       * 2️⃣ Supabase Auth login
+       */
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password: password,
+        });
+
+      if (authError) {
+        setErrors({ password: authError.message });
+        setLoading(false);
+        return;
+      }
+
+      /**
+       * 3️⃣ Save token & driver data
+       */
+      await AsyncStorage.multiSet([
+        ['token', authData.session.access_token],
+        ['driver_id', String(driver.id)],
+        ['franchise_id', driver.franchise_id || ''],
+        ['driver_email', driver.email],
+      ]);
+
+      /**
+       * 4️⃣ Navigate
+       */
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'DeliveryStack' }],
       });
-
-    if (authError) {
-      setErrors({ password: authError.message });
+    } catch (e) {
+      console.log('LOGIN ERROR:', e);
+    } finally {
       setLoading(false);
-      return;
     }
-
-    /**
-     * 3️⃣ Save token & driver data
-     */
-    await AsyncStorage.multiSet([
-      ['token', authData.session.access_token],
-      ['driver_id', String(driver.id)],
-      ['franchise_id', driver.franchise_id || ''],
-      ['driver_email', driver.email],
-    ]);
-
-    /**
-     * 4️⃣ Navigate
-     */
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'DeliveryStack' }],
-    });
-  } catch (e) {
-    console.log('LOGIN ERROR:', e);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/coconut.png')} style={styles.logo} />
+      <Image source={require('../assets/login_logo.png')} style={styles.logo} />
 
       <TouchableOpacity style={styles.portalBtn}>
-        <MaterialIcons
-          name="delivery-dining"
-          size={22}
-          color={COLORS.WHITE}
-        />
+        <MaterialIcons name="delivery-dining" size={22} color={COLORS.WHITE} />
         <Text style={styles.portalText}>{STRINGS.DRIVER_PORTAL}</Text>
       </TouchableOpacity>
 
@@ -343,9 +337,7 @@ const onLogin = async () => {
             />
           </TouchableOpacity>
         </View>
-        {errors.password && (
-          <Text style={styles.error}>{errors.password}</Text>
-        )}
+        {errors.password && <Text style={styles.error}>{errors.password}</Text>}
 
         <AppButton
           title={loading ? 'Logging in...' : STRINGS.LOGIN}
@@ -367,8 +359,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logo: {
-    height: 90,
-    width: 90,
+    height: 120,
+    width: 120,
     alignSelf: 'center',
     marginBottom: 20,
     resizeMode: 'contain',
@@ -434,4 +426,3 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 });
-
