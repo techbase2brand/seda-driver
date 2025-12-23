@@ -6,11 +6,6 @@ import Colors from '../constants/Color';
 const HeaderBar = ({ navigation,orderName }) => {
   return (
     <View style={styles.header}>
-      {/* <TouchableOpacity style={styles.back} onPress={()=> navigation.goBack()}>
-        <Icon name="arrow-back" size={20} color={Colors.WHITE} />
-        <Text style={styles.backText}>Back</Text>
-      </TouchableOpacity> */}
-
       <View style={{ flexDirection: 'row', gap: 10 }}>
         <TouchableOpacity
           style={styles.back}
@@ -40,8 +35,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 50,
     paddingBottom: 55,
-    // borderBottomLeftRadius: 28,
-    // borderBottomRightRadius: 28,
+    
   },
   back: {
     flexDirection: 'row',

@@ -9,6 +9,8 @@ import DeliveriesScreen from '../screens/DeliveriesScreen';
 import DeliveryDetailsScreen from '../screens/DeliveryDetailsScreen';
 import UpdateStatusScreen from '../screens/UpdateStatusScreen';
 import UnableToDeliverScreen from '../screens/UnableToDeliverScreen';
+import DriverMapScreen from '../screens/DriverMapScreen';
+
 
 
 import AuthStack from './AuthStack';
@@ -54,6 +56,8 @@ export default function DeliveryStack() {
 
       <Stack.Screen name="UpdateStatusScreen" component={UpdateStatusScreen} />
       <Stack.Screen name="UnableToDeliverScreen" component={UnableToDeliverScreen} />
+      <Stack.Screen name="DriverMapScreen" component={DriverMapScreen} />
+
 
 
 

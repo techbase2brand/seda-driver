@@ -354,7 +354,7 @@ export default DeliveryLoginScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.BACKGROUND,
+    backgroundColor: "#FEF8EF",
     padding: 20,
     justifyContent: 'center',
   },

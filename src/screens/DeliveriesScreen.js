@@ -130,6 +130,19 @@ const DeliveriesScreen = ({ navigation }) => {
 
     return { dIdNum, fIdClean };
   }, []);
+  const sortOrdersByStatus = ordersList => {
+    if (!Array.isArray(ordersList)) return [];
+
+    return [...ordersList].sort((a, b) => {
+      const getPriority = status => {
+        if (status === 'completed') return 3;
+        if (status === 'cancelled') return 2;
+        return 1; // baki sab
+      };
+
+      return getPriority(a.deliveryStatus) - getPriority(b.deliveryStatus);
+    });
+  };
 
   const fetchOrders = useCallback(
     async ({ dIdNum, fIdClean } = {}) => {
@@ -172,9 +185,9 @@ const DeliveriesScreen = ({ navigation }) => {
         }
 
         console.log('✅ Orders fetched:', data?.length || 0);
-        console.log('Orders data >>', data);
-
-        setOrders(Array.isArray(data) ? data : []);
+        const sortedOrders = sortOrdersByStatus(data);
+        setOrders(sortedOrders);
+        console.log('Orders data >>', sortedOrders);
       } catch (e) {
         console.log('fetchOrders exception:', e);
         setOrders([]);

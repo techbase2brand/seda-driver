@@ -392,6 +392,8 @@ import {
   ScrollView,
   Image,
   Alert,
+  Platform,
+  PermissionsAndroid,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
@@ -416,12 +418,41 @@ export default function UpdateStatusScreen({ navigation, route }) {
 
   /* ================= IMAGE PICKERS ================= */
 
-  const openCamera = () => {
-    launchCamera({ mediaType: 'photo', quality: 0.7 }, res => {
-      if (res.didCancel || res.errorCode) return;
-      setPhoto(res.assets[0]);
-    });
-  };
+  // const openCamera = () => {
+  //   launchCamera({ mediaType: 'photo', quality: 0.7 }, res => {
+  //     if (res.didCancel || res.errorCode) return;
+  //     setPhoto(res.assets[0]);
+  //   });
+  // };
+
+// import { PermissionsAndroid, Platform } from 'react-native';
+
+const requestCameraPermission = async () => {
+  if (Platform.OS === 'android') {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.CAMERA,
+    );
+    return granted === PermissionsAndroid.RESULTS.GRANTED;
+  }
+  return true;
+};
+
+const openCamera = async () => {
+  const ok = await requestCameraPermission();
+  if (!ok) return;
+
+  launchCamera(
+    {
+      mediaType: 'photo',
+      quality: 0.7,
+      saveToPhotos: true,
+    },
+    response => {
+      if (response.didCancel || response.errorCode) return;
+      setPhoto(response.assets?.[0]);
+    },
+  );
+};
 
   const openGallery = () => {
     launchImageLibrary({ mediaType: 'photo', quality: 0.7 }, res => {

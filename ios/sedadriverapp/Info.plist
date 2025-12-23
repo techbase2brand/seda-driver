@@ -55,7 +55,19 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+<string>We need your location to show delivery directions</string>
+
+<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+<string>We need your location to show delivery directions</string>
+<key>NSCameraUsageDescription</key>
+<string>This app needs camera access to take photos</string>
+
+<key>NSPhotoLibraryUsageDescription</key>
+<string>This app needs photo library access</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>This app needs permission to save photos</string>
+
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

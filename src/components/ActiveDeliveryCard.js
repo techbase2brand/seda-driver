@@ -5,6 +5,10 @@ import Colors from '../constants/Color';
 import GradientButton from './GradientButton';
 
 const ActiveDeliveryCard = ({ item, navigation }) => {
+  const isOrderClosed =
+    item?.deliveryStatus === 'completed' ||
+    item?.deliveryStatus === 'cancelled';
+
   const handleNavigation = () => {
     navigation.navigate('UpdateStatusScreen', { order: item });
   };
@@ -12,7 +16,9 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Text style={styles.order}>{item.order_name}</Text>
+        <Text style={styles.order} numberOfLines={1} ellipsizeMode="tail">
+          {item.order_name}
+        </Text>
         <Text style={styles.qty}>
           {'Fresh Coconuts'} : {`${item.quantity} Cases`}
         </Text>
@@ -29,7 +35,13 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       </View>
 
       <View style={styles.actions}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            gap: 10,
+          }}
+        >
           <TouchableOpacity
             style={{
               borderWidth: 1,
@@ -40,7 +52,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
               height: 48,
               paddingHorizontal: 16,
               borderRadius: 14,
-              width: '50%',
+              width: '49%',
             }}
             onPress={() =>
               navigation.navigate('DeliveryDetailsScreen', {
@@ -54,6 +66,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
           <GradientButton
             title="Mark as Delivered"
             onPress={handleNavigation}
+            disabled={isOrderClosed}
             colors={Colors.successGradient}
             icon={
               <Icon name="checkmark-circle-outline" size={18} color="#fff" />
@@ -66,6 +79,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
         <GradientButton
           title="Unable to Deliver"
           colors={Colors.dangerGradient}
+          disabled={isOrderClosed}
           onPress={() =>
             navigation.navigate('UnableToDeliverScreen', { order: item })
           }
@@ -96,7 +110,8 @@ const styles = StyleSheet.create({
   },
   order: {
     fontWeight: '700',
-    fontSize: 15,
+    fontSize: 14,
+    width: '48%',
   },
   qty: {
     color: Colors.textGray,

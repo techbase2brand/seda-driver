@@ -17,10 +17,10 @@ import { supabase } from '../lib/supabase';
 const DeliveryDetailsScreen = ({ navigation, route }) => {
   // const phoneNumber = '9876543210';
   // const address = '43 ISBT RdSector 43, Chandigarh';
-console.log("rroottesss>>", route?.params?.orderId);
-const orderId = route?.params?.orderId;
+  const orderId = route?.params?.orderId;
   const [order, setOrder] = useState(null);
-
+  
+  console.log('orderorder>>', order);
   useEffect(() => {
     if (orderId) {
       fetchOrder();
@@ -42,38 +42,47 @@ const orderId = route?.params?.orderId;
     setOrder(data);
   };
 
-const customer =
-  typeof order?.customer_details === 'string'
-    ? JSON.parse(order.customer_details)
-    : order?.customer_details;
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
+  const customer =
+    typeof order?.customer_details === 'string'
+      ? JSON.parse(order.customer_details)
+      : order?.customer_details;
+      const selectedAddress = customer?.delivery_address?.find(
+    item => item.isSelected === true,
+  );
+  console.log('selectedAddress>>',customer, selectedAddress);
+  const formatDate = dateString => {
+    if (!dateString) return '-';
 
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
 
-  return `${day}-${month}-${year}`;
-};
-  const onCallPress = (phoneNumber) => {
+    return `${day}-${month}-${year}`;
+  };
+  const onCallPress = phoneNumber => {
     const url = `tel:${phoneNumber}`;
     Linking.openURL(url).catch(() => Alert.alert('Error', ''));
   };
-  const deliveredNavigation = () => {
-    navigation.navigate('UpdateStatusScreen');
+  // const deliveredNavigation = () => {
+  //   navigation.navigate('UpdateStatusScreen');
+  // };
+   const deliveredNavigation = () => {
+    navigation.navigate('UpdateStatusScreen', { order: order });
   };
-  const onNavigatePress = (address) => {
-    const encodedAddress = encodeURIComponent(address);
+  const onNavigatePress = address => {
+    console.log("addrsess",address);
+    
+    // const encodedAddress = encodeURIComponent(address);ss
+    navigation.navigate('DriverMapScreen', { address: address,order:order });
+    //   const url =
+    //     Platform.OS === 'ios'
+    //       ? `http://maps.apple.com/?daddr=${encodedAddress}`
+    //       : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
 
-    const url =
-      Platform.OS === 'ios'
-        ? `http://maps.apple.com/?daddr=${encodedAddress}`
-        : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
-
-    Linking.openURL(url).catch(() =>
-      Alert.alert('Error', 'Map open nahi ho pa raha'),
-    );
+    //   Linking.openURL(url).catch(() =>
+    //     Alert.alert('Error', 'Map open nahi ho pa raha'),
+    //   );
   };
   return (
     <ScrollView style={styles.container}>
@@ -98,7 +107,10 @@ const formatDate = (dateString) => {
               style={{ flexDirection: 'row', justifyContent: 'space-between' }}
             >
               <InfoRow label="PO Number" value={order?.po_number} />
-              <InfoRow label="Delivery Date" value={formatDate(order?.delivery_date)} />
+              <InfoRow
+                label="Delivery Date"
+                value={formatDate(order?.delivery_date)}
+              />
             </View>
           </InfoCard>
         </View>
@@ -111,11 +123,11 @@ const formatDate = (dateString) => {
             value={customer?.company_name}
           />
           <InfoRow label="Contact" value={customer?.first_name} />
-          <InfoRow label="Phone Number" value={customer?.phone}/>
+          <InfoRow label="Phone Number" value={customer?.phone} />
           <InfoRow
             icon="location-outline"
             label="Delivery Address"
-            value={customer?.delivery_address?.address}
+            value={`${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}`}
           />
 
           <View
@@ -131,7 +143,7 @@ const formatDate = (dateString) => {
                 title="Call"
                 icon="call-outline"
                 colors={Colors.successGradient}
-                onPress={()=>onCallPress(customer?.phone)}
+                onPress={() => onCallPress(customer?.phone)}
               />
             </View>
             <View style={{ width: '50%' }}>
@@ -139,7 +151,9 @@ const formatDate = (dateString) => {
                 title="Navigate"
                 icon="navigate-outline"
                 colors={[Colors.PRIMARY_LOW, Colors.PRIMARY]}
-                onPress={()=>onNavigatePress(customer?.delivery_address?.address)}
+                onPress={() =>
+                  onNavigatePress(customer?.delivery_address)
+                }
               />
             </View>
           </View>
@@ -153,7 +167,7 @@ const formatDate = (dateString) => {
           title="Mark as Delivered"
           icon="checkmark-circle-outline"
           colors={Colors.successGradient}
-          onPress={()=>deliveredNavigation()}
+          onPress={deliveredNavigation}
         />
       </View>
     </ScrollView>

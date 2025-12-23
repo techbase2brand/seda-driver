@@ -18,6 +18,12 @@ const DeliveryStats = ({ orders }) => {
   const completedOrdersCount = orders?.filter(
   item => item?.deliveryStatus == "completed"
 )?.length;
+const inProgressCount = orders?.filter(
+    item =>
+      item?.deliveryStatus !== 'completed'
+    //  &&
+    //   item?.deliveryStatus !== 'cancelled'
+  ).length;
   return (
     <View style={styles.row}>
       <StatCard
@@ -28,7 +34,7 @@ const DeliveryStats = ({ orders }) => {
       />
       <StatCard
         icon="trending-up-outline"
-        value={orders?.length}
+        value={inProgressCount}
         label="In Progress"
         bg="#4AA3DF"
       />

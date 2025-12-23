@@ -35,18 +35,19 @@ import { Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../constants/Color';
 
-const GradientButton = ({ title, colors, onPress, icon }) => {
+const GradientButton = ({ title, colors, onPress, icon,disabled }) => {
   return (
     <LinearGradient
-      colors={colors}
+      colors={disabled ? [Colors.textGray, Colors.textGray] : colors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 0 }}
-      style={styles.gradient}
+      style={[styles.gradient, disabled && { opacity: 0.6 }]}
     >
       <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.8}
+        onPress={disabled ? null : onPress}
+        activeOpacity={disabled ? 1 : 0.8}
         style={styles.btn}
+        disabled={disabled}
       >
         {icon}
         <Text style={styles.text}>{title}</Text>
