@@ -3,26 +3,39 @@ import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 import { DELIVERY_SUMMARY } from '../constants/Constants';
+import LinearGradient from 'react-native-linear-gradient';
 
-const StatCard = ({ icon, value, label, bg }) => (
+const StatCard = ({ icon, value, label, bg, gradient }) => (
   <View style={styles.card}>
-    <View style={[styles.iconBox, { backgroundColor: bg }]}>
+    {/* <LinearGradient
+  //   colors={gradient}
+  //   start={{ x: 0, y: 0 }}
+  //   end={{ x: 1, y: 1 }}
+  //   style={styles.card}
+  // > */}
+
+    <LinearGradient
+      colors={gradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.iconBox}
+    >
+      {/* <View style={[styles.iconBox, { backgroundColor: bg }]}> */}
       <Icon name={icon} size={20} color="#fff" />
-    </View>
+      {/* </View> */}
+    </LinearGradient>
     <Text style={styles.value}>{value}</Text>
     <Text style={styles.label}>{label}</Text>
+    {/* // </LinearGradient> */}
   </View>
 );
 
 const DeliveryStats = ({ orders }) => {
   const completedOrdersCount = orders?.filter(
-  item => item?.deliveryStatus == "completed"
-)?.length;
-const inProgressCount = orders?.filter(
-    item =>
-      item?.deliveryStatus !== 'completed'
-    //  &&
-    //   item?.deliveryStatus !== 'cancelled'
+    item => item?.deliveryStatus == 'completed',
+  )?.length;
+  const inProgressCount = orders?.filter(
+    item => item?.deliveryStatus == 'in transit',
   ).length;
   return (
     <View style={styles.row}>
@@ -31,18 +44,21 @@ const inProgressCount = orders?.filter(
         value={orders?.length}
         label="Assigned"
         bg="#0A4DFF"
+        gradient={['#0a24a7ff', '#305FFD' ]}
       />
       <StatCard
         icon="trending-up-outline"
         value={inProgressCount}
         label="In Progress"
         bg="#4AA3DF"
+        gradient={['#84b9dcff', '#4AA3DF']}
       />
       <StatCard
         icon="checkmark-circle-outline"
         value={completedOrdersCount}
         label="Delivered"
         bg="#16A34A"
+        gradient={['#0FA958', '#63ab70ff']}
       />
     </View>
   );
@@ -61,6 +77,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.cardBg,
     borderRadius: 16,
     alignItems: 'center',
+    justifyContent: 'center',
     padding: 14,
     shadowColor: Colors.shadow,
     shadowOpacity: 0.2,

@@ -1,7 +1,7 @@
 
 export default {
   PRIMARY: '#4FA3E3',
-  PRIMARY_DARK: '#305FFD',
+  PRIMARY_DARK: '#2553ebff',
   PRIMARY_LOW: '#0a24a7ff',
   BACKGROUND: '#F2F4F6',
   ERROR: '#FF3B30',

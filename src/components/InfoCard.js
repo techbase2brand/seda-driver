@@ -1,19 +1,19 @@
 import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 
-const InfoRow = ({label, value, icon}) => (
+const InfoRow = ({ label, value, icon }) => (
   <View style={styles.row}>
     {icon && <Icon name={icon} size={16} color={Colors.textGray} />}
-    <View style={{marginLeft: icon ? 8 : 0}}>
+    <View style={{ marginLeft: icon ? 8 : 0 }}>
       <Text style={styles.label}>{label}</Text>
       <Text style={styles.value}>{value}</Text>
     </View>
   </View>
 );
 
-const InfoCard = ({title, children}) => {
+const InfoCard = ({ title, children }) => {
   return (
     <View style={styles.card}>
       <Text style={styles.heading}>{title}</Text>
@@ -22,7 +22,7 @@ const InfoCard = ({title, children}) => {
   );
 };
 
-export {InfoCard, InfoRow};
+export { InfoCard, InfoRow };
 
 const styles = StyleSheet.create({
   card: {
@@ -47,5 +47,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.TEXT,
     marginTop: 2,
+    fontWeight: '600',
   },
 });

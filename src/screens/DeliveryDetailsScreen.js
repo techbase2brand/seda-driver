@@ -19,7 +19,7 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
   // const address = '43 ISBT RdSector 43, Chandigarh';
   const orderId = route?.params?.orderId;
   const [order, setOrder] = useState(null);
-  
+
   console.log('orderorder>>', order);
   useEffect(() => {
     if (orderId) {
@@ -46,10 +46,10 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
     typeof order?.customer_details === 'string'
       ? JSON.parse(order.customer_details)
       : order?.customer_details;
-      const selectedAddress = customer?.delivery_address?.find(
-    item => item.isSelected === true,
+  const selectedAddress = customer?.delivery_address?.find(
+    item => item?.isSelected === true,
   );
-  console.log('selectedAddress>>',customer, selectedAddress);
+  // console.log('selectedAddress>>', customer, selectedAddress);
   const formatDate = dateString => {
     if (!dateString) return '-';
 
@@ -67,21 +67,21 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
   // const deliveredNavigation = () => {
   //   navigation.navigate('UpdateStatusScreen');
   // };
-   const deliveredNavigation = () => {
+  const deliveredNavigation = () => {
     navigation.navigate('UpdateStatusScreen', { order: order });
   };
   const onNavigatePress = address => {
-    console.log("addrsess",address);
-    
+    console.log('addrsess', address);
+
     // const encodedAddress = encodeURIComponent(address);ss
-    navigation.navigate('DriverMapScreen', { address: address,order:order });
+    navigation.navigate('DriverMapScreen', { address: address, order: order });
     //   const url =
     //     Platform.OS === 'ios'
     //       ? `http://maps.apple.com/?daddr=${encodedAddress}`
     //       : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
 
     //   Linking.openURL(url).catch(() =>
-    //     Alert.alert('Error', 'Map open nahi ho pa raha'),
+    //     Alert.alert('Error', 'Map Not working'),
     //   );
   };
   return (
@@ -150,10 +150,8 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
               <ActionButton
                 title="Navigate"
                 icon="navigate-outline"
-                colors={[Colors.PRIMARY_LOW, Colors.PRIMARY]}
-                onPress={() =>
-                  onNavigatePress(customer?.delivery_address)
-                }
+                colors={[Colors.PRIMARY_LOW, Colors.PRIMARY_DARK]}
+                onPress={() => onNavigatePress(customer?.delivery_address)}
               />
             </View>
           </View>
