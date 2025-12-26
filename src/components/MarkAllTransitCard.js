@@ -131,6 +131,7 @@ const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: Colors.cardBg,
     margin: 16,
+    marginHorizontal:32,
     borderRadius: 16,
     padding: 14,
     shadowColor: Colors.shadow,

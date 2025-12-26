@@ -256,7 +256,7 @@ const DeliveriesScreen = ({ navigation }) => {
       <View style={{ position: 'relative', marginBottom: 100 }}>
         <DeliveriesHeader navigation={navigation} onLogout={onLogout} />
         <View
-          style={{ position: 'absolute', top: '75%', paddingHorizontal: 30 }}
+          style={{ position: 'absolute', top: '75%' }}
         >
           <MarkAllTransitCard orders={orders} />
         </View>
