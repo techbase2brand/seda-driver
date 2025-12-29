@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 
-const HeaderBar = ({ navigation,orderName }) => {
+const HeaderBar = ({ navigation,orderName,orderStop }) => {
   return (
     <View style={styles.header}>
       <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -21,7 +21,7 @@ const HeaderBar = ({ navigation,orderName }) => {
       </View>
 
       <View style={styles.stopBadge}>
-        <Text style={styles.stopText}>Stop{'\n'}1</Text>
+        <Text style={styles.stopText}>Stop{'\n'}{orderStop}</Text>
       </View>
     </View>
   );

@@ -74,14 +74,37 @@ import {
   Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import Colors from '../constants/Color';
+import Feather from 'react-native-vector-icons/Feather';
 
-const DeliveriesHeader = ({ navigation, onLogout }) => {
+import Colors from '../constants/Color';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
+
+const DeliveriesHeader = ({ navigation,totaldeliveries }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
-  const handleConfirmLogout = () => {
-    setShowLogoutModal(false);
-    onLogout && onLogout();
+  const handleConfirmLogout = async () => {
+    console.log('working or not ');
+
+    try {
+      await AsyncStorage.multiRemove([
+        'token',
+        'driver_id',
+        'franchise_id',
+        'driver_email',
+      ]);
+
+      console.log('Logout success, storage cleared');
+      await supabase.auth.signOut();
+      setShowLogoutModal(false);
+
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'AuthStack' }],
+      });
+    } catch (error) {
+      console.log('Logout error:', error);
+    }
   };
 
   return (
@@ -96,10 +119,11 @@ const DeliveriesHeader = ({ navigation, onLogout }) => {
 
           <TouchableOpacity
             style={styles.logout}
-            onPress={() => setShowLogoutModal(true)}
+            onPress={() => navigation.navigate('DriverProfileScreen',{totaldeliveries:totaldeliveries})}
+            // onPress={() => setShowLogoutModal(true)}
           >
-            <Icon name="log-out-outline" size={20} color={Colors.WHITE} />
-            <Text style={styles.logoutText}>Logout</Text>
+            <Feather name="user" size={20} color={Colors.WHITE} />
+            {/* <Text style={styles.logoutText}>Logout</Text> */}
           </TouchableOpacity>
         </View>
 

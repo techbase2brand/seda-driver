@@ -87,7 +87,7 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={{ position: 'relative', marginBottom: 120 }}>
-        <HeaderBar navigation={navigation} orderName={order?.order_name} />
+        <HeaderBar navigation={navigation} orderName={order?.order_name} orderStop={order?.stop_number} />
         <View
           style={{
             position: 'absolute',

@@ -220,25 +220,29 @@ const DeliveriesScreen = ({ navigation }) => {
     setRefreshing(false);
   }, [fetchOrders, driverId, franchiseId]);
 
-  const onLogout = async () => {
-    try {
-      await AsyncStorage.multiRemove([
-        'token',
-        'driver_id',
-        'franchise_id',
-        'driver_email',
-      ]);
+  const completedOrders = orders.filter(
+    item => item.deliveryStatus === 'completed',
+  );
 
-      console.log('Logout success, storage cleared');
-      await supabase.auth.signOut();
+  const completedCount = completedOrders.length;
 
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'AuthStack' }],
-      });
-    } catch (error) {
-      console.log('Logout error:', error);
-    }
+  // 2️⃣ aaj ke completed orders
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const todayCompletedOrders = orders.filter(item => {
+    if (item.deliveryStatus !== 'completed') return false;
+
+    const orderDate = new Date(item.order_date);
+    orderDate.setHours(0, 0, 0, 0);
+
+    return orderDate.getTime() === today.getTime();
+  });
+
+  const todayCompletedCount = todayCompletedOrders.length;
+  const totaldeliveries = {
+    totalompleted: completedCount,
+    todaycompleted: todayCompletedCount,
   };
 
   const renderEmpty = () => {
@@ -254,10 +258,11 @@ const DeliveriesScreen = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <View style={{ position: 'relative', marginBottom: 100 }}>
-        <DeliveriesHeader navigation={navigation} onLogout={onLogout} />
-        <View
-          style={{ position: 'absolute', top: '75%' }}
-        >
+        <DeliveriesHeader
+          navigation={navigation}
+          totaldeliveries={totaldeliveries}
+        />
+        <View style={{ position: 'absolute', top: '75%' }}>
           <MarkAllTransitCard orders={orders} />
         </View>
       </View>

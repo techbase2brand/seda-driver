@@ -21,21 +21,23 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={{flexDirection:"row", alignItems:"center",gap:10}}>
-          <LinearGradient
-            colors={['#84b9dcff', '#4AA3DF']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.iconBox}
-          >
-            <Text
-              style={{ color: '#fff', fontWeight: '800' }}
-              numberOfLines={1}
-              ellipsizeMode="tail"
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+          {item?.stop_number && (
+            <LinearGradient
+              colors={['#84b9dcff', '#4AA3DF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.iconBox}
             >
-              # {`1`}
-            </Text>
-          </LinearGradient>
+              <Text
+                style={{ color: '#fff', fontWeight: '800' }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                # {item?.stop_number}
+              </Text>
+            </LinearGradient>
+          )}
           <Text style={styles.order} numberOfLines={1} ellipsizeMode="tail">
             {item.order_name}
           </Text>
