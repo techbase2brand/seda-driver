@@ -15,9 +15,23 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
     navigation.navigate('UpdateStatusScreen', { order: item });
   };
   const companyDetail = JSON.parse(item?.customer_details);
-  const selectedAddress = companyDetail?.delivery_address?.find(
-    item => item?.isSelected === true,
-  );
+  const rawAddresses = companyDetail?.delivery_address;
+
+  // always convert to array
+  const deliveryAddresses = Array.isArray(rawAddresses)
+    ? rawAddresses
+    : rawAddresses
+    ? [rawAddresses]
+    : [];
+
+  const selectedAddress =
+    deliveryAddresses.length === 1
+      ? deliveryAddresses[0]
+      : deliveryAddresses.find(addr => addr?.isSelected === true);
+
+  // const selectedAddress =  companyDetail?.delivery_address?.find(
+  //   item => item?.isSelected === true,
+  // );
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -88,9 +102,14 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       <View style={styles.row}>
         <Icon name="location-outline" size={18} />
         <Text style={styles.text}>
-          {`${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}` ||
-            item.delivery_address}
+          {selectedAddress?.street &&  selectedAddress?.street !== undefined
+            ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.zipCode}`
+            : item?.delivery_address}
         </Text>
+        {/* <Text style={styles.text}>
+          {`${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}` ||
+            item?.delivery_address}
+        </Text> */}
       </View>
 
       <View style={styles.actions}>

@@ -6,7 +6,7 @@
  */
 
 import { NavigationContainer } from '@react-navigation/native';
-import { Alert, PermissionsAndroid, Platform, SafeAreaView, StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, PermissionsAndroid, Platform, SafeAreaView, StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
 import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
@@ -124,17 +124,17 @@ useEffect(() => {
     }
   };
   return (
-    <View style={styles.container}>
-      {/* <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      /> */}
-       <NavigationContainer>
-   {userToken ?  
-      <DeliveryStack/>: <AuthStack/> }
-
-    </NavigationContainer>
-    </View>
+   <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <View style={styles.container}>
+        <NavigationContainer>
+          {userToken ? <DeliveryStack /> : <AuthStack />}
+        </NavigationContainer>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
