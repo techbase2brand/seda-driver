@@ -16,6 +16,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
   };
   const companyDetail = JSON.parse(item?.customer_details);
   const rawAddresses = companyDetail?.delivery_address;
+  console.log('companyDetailcompanyDetail', companyDetail);
 
   // always convert to array
   const deliveryAddresses = Array.isArray(rawAddresses)
@@ -58,7 +59,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
         </View>
         <View>
           <Text style={styles.qty}>{'Fresh Coconuts'}</Text>
-          <Text style={[styles.qty, { textAlign: 'right' }]}>
+          <Text style={[styles.qty, { textAlign: 'right', fontWeight: '700' }]}>
             {`${item.quantity} Cases`}
           </Text>
         </View>
@@ -102,7 +103,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       <View style={styles.row}>
         <Icon name="location-outline" size={18} />
         <Text style={styles.text}>
-          {selectedAddress?.street &&  selectedAddress?.street !== undefined
+          {selectedAddress?.street && selectedAddress?.street !== undefined
             ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.zipCode}`
             : item?.delivery_address}
         </Text>
@@ -111,6 +112,12 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
             item?.delivery_address}
         </Text> */}
       </View>
+      {companyDetail?.delivery_zone_name && (
+        <View style={styles.row}>
+          <Icon name="cube-outline" size={18} />
+          <Text style={styles.text}>{companyDetail?.delivery_zone_name}</Text>
+        </View>
+      )}
 
       <View style={styles.actions}>
         <View
@@ -141,16 +148,18 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
           >
             <Text>View Detail</Text>
           </TouchableOpacity>
-
-          <GradientButton
-            title="Mark as Delivered"
-            onPress={handleNavigation}
-            disabled={isOrderClosed}
-            colors={Colors.successGradient}
-            icon={
-              <Icon name="checkmark-circle-outline" size={18} color="#fff" />
-            }
-          />
+          <View style={{ width: '50%' }}>
+            <GradientButton
+              title="Mark as Delivered"
+              onPress={handleNavigation}
+              disabled={isOrderClosed}
+              font={true}
+              colors={Colors.successGradient}
+              icon={
+                <Icon name="checkmark-circle-outline" size={18} color="#fff" />
+              }
+            />
+          </View>
         </View>
 
         <View style={{ height: 10 }} />

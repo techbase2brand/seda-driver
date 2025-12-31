@@ -1,87 +1,3 @@
-// import React, { useEffect } from 'react';
-// import { View, Text, FlatList, StyleSheet } from 'react-native';
-// import ActiveDeliveryCard from '../components/ActiveDeliveryCard';
-// import { ACTIVE_DELIVERIES } from '../constants/Constants';
-// import DeliveriesHeader from '../components/DeliveriesHeader';
-// import MarkAllTransitCard from '../components/MarkAllTransitCard';
-// import DeliveryStats from '../components/DeliveryStats';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import { supabase } from '../lib/supabase';
-
-// const DeliveriesScreen = ({ navigation }) => {
-//   useEffect(() => {
-//     const tokenn = async () => {
-//       const token = await AsyncStorage.getItem('token');
-//       const franchiseId = await AsyncStorage.getItem('franchise_id');
-//       const driverId = await AsyncStorage.getItem('driver_id');
-
-//       console.log('franchiseIdfranchiseId>>', franchiseId, token,driverId);
-//     };
-//     tokenn();
-//   }, []);
-//   const onLogout = async () => {
-//     try {
-//       // remove specific keys
-//       await AsyncStorage.multiRemove([
-//         'token',
-//         'driver_id',
-//         'franchise_id',
-//         'driver_email',
-//       ]);
-
-//       console.log('Logout success, storage cleared');
-
-//       // optional: supabase auth logout
-//       await supabase.auth.signOut();
-
-//       // navigate to login
-//       navigation.reset({
-//         index: 0,
-//         routes: [{ name: 'AuthStack' }],
-//       });
-//     } catch (error) {
-//       console.log('Logout error:', error);
-//     }
-//   };
-//   return (
-//     <View style={styles.container}>
-//       <View style={{ position: 'relative', marginBottom: 100 }}>
-//         <DeliveriesHeader navigation={navigation} onLogout={onLogout} />
-//         <View style={{ position: 'absolute', top: '75%' }}>
-//           <MarkAllTransitCard />
-//         </View>
-//       </View>
-//       <DeliveryStats />
-//       <View style={{ padding: 16 }}>
-//         <Text style={styles.title}>Active Deliveries</Text>
-
-//         <FlatList
-//           data={ACTIVE_DELIVERIES}
-//           keyExtractor={item => item.id}
-//           renderItem={({ item }) => (
-//             <ActiveDeliveryCard item={item} navigation={navigation} />
-//           )}
-//           showsVerticalScrollIndicator={false}
-//         />
-//       </View>
-//     </View>
-//   );
-// };
-
-// export default DeliveriesScreen;
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     // padding: 16,
-//   },
-//   title: {
-//     fontSize: 18,
-//     fontWeight: '700',
-//     marginBottom: 12,
-//   },
-// });
-
 import React, { useEffect, useCallback, useState } from 'react';
 import {
   View,
@@ -90,6 +6,7 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  ScrollView,
 } from 'react-native';
 
 import ActiveDeliveryCard from '../components/ActiveDeliveryCard';
@@ -107,6 +24,8 @@ const DeliveriesScreen = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false); // pull to refresh
   const [driverId, setDriverId] = useState(null);
   const [franchiseId, setFranchiseId] = useState(null);
+  const [markAllOrder, setMarkAllOrder] = useState(false);
+  console.log('markAllOrdermarkAllOrder>>', markAllOrder);
 
   const loadIdsFromStorage = useCallback(async () => {
     const token = await AsyncStorage.getItem('token');
@@ -133,21 +52,32 @@ const DeliveriesScreen = ({ navigation }) => {
   const sortOrdersByStatus = ordersList => {
     if (!Array.isArray(ordersList)) return [];
 
-    return [...ordersList].sort((a, b) => {
-      const getPriority = status => {
-        if (status === 'completed') return 3;
-        if (status === 'cancelled') return 2;
-        return 1; // baki sab
-      };
+    const getPriority = status => {
+      if (status === 'completed') return 3;
+      if (status === 'cancelled') return 2;
+      return 1; // in transit / pending
+    };
 
-      return getPriority(a.deliveryStatus) - getPriority(b.deliveryStatus);
+    return [...ordersList].sort((a, b) => {
+      // 1️⃣ status priority
+      const statusDiff =
+        getPriority(a.deliveryStatus) - getPriority(b.deliveryStatus);
+
+      if (statusDiff !== 0) {
+        return statusDiff;
+      }
+
+      // 2️⃣ same status → sort by stop_number
+      const stopA = a.stop_number ?? 0;
+      const stopB = b.stop_number ?? 0;
+
+      return stopA - stopB;
     });
   };
 
   const fetchOrders = useCallback(
     async ({ dIdNum, fIdClean } = {}) => {
       try {
-        // if ids not passed, read from state/storage
         let did = dIdNum;
         let fid = fIdClean;
 
@@ -158,20 +88,25 @@ const DeliveriesScreen = ({ navigation }) => {
         }
 
         if (!did) {
-          console.log('No driverId found, orders empty');
           setOrders([]);
           return;
         }
 
-        // Build query
+        // 🔹 today range
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
+
         let query = supabase
           .from('orders')
           .select('*')
-          .eq('driver_id', did) // driverId match (must)
-          .order('created_at', { ascending: false })
-          .limit(50);
+          .eq('driver_id', did)
+          .gte('created_at', startOfDay.toISOString())
+          .lte('created_at', endOfDay.toISOString())
+          .order('created_at', { ascending: false });
 
-        // franchiseId match only if exists
         if (fid) {
           query = query.eq('franchise_id', fid);
         }
@@ -183,11 +118,10 @@ const DeliveriesScreen = ({ navigation }) => {
           setOrders([]);
           return;
         }
+        console.log('Orders fetch:', data);
 
-        console.log('✅ Orders fetched:', data?.length || 0);
         const sortedOrders = sortOrdersByStatus(data);
         setOrders(sortedOrders);
-        console.log('Orders data >>', sortedOrders);
       } catch (e) {
         console.log('fetchOrders exception:', e);
         setOrders([]);
@@ -212,7 +146,7 @@ const DeliveriesScreen = ({ navigation }) => {
     return () => {
       isMounted = false;
     };
-  }, [fetchOrders, loadIdsFromStorage]);
+  }, [fetchOrders, loadIdsFromStorage, markAllOrder]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -263,10 +197,14 @@ const DeliveriesScreen = ({ navigation }) => {
           totaldeliveries={totaldeliveries}
         />
         <View style={{ position: 'absolute', top: '75%' }}>
-          <MarkAllTransitCard orders={orders} />
+          <MarkAllTransitCard
+            orders={orders}
+            setMarkAllOrder={setMarkAllOrder}
+            onSuccess={fetchOrders}
+          />
         </View>
       </View>
-
+      {/* <ScrollView showsVerticalScrollIndicator={false}> */}
       <DeliveryStats orders={orders} />
 
       <View style={{ padding: 16, flex: 1 }}>
@@ -292,6 +230,7 @@ const DeliveriesScreen = ({ navigation }) => {
           />
         )}
       </View>
+      {/* </ScrollView> */}
     </View>
   );
 };

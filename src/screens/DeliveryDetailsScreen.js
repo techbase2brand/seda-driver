@@ -46,9 +46,22 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
     typeof order?.customer_details === 'string'
       ? JSON.parse(order.customer_details)
       : order?.customer_details;
-  const selectedAddress = customer?.delivery_address?.find(
-    item => item?.isSelected === true,
-  );
+      const rawAddresses = customer?.delivery_address;
+
+  // always convert to array
+  const deliveryAddresses = Array.isArray(rawAddresses)
+    ? rawAddresses
+    : rawAddresses
+    ? [rawAddresses]
+    : [];
+
+  const selectedAddress =
+    deliveryAddresses.length === 1
+      ? deliveryAddresses[0]
+      : deliveryAddresses.find(addr => addr?.isSelected === true);
+  // const selectedAddress = customer?.delivery_address?.find(
+  //   item => item?.isSelected === true,
+  // );
   // console.log('selectedAddress>>', customer, selectedAddress);
   const formatDate = dateString => {
     if (!dateString) return '-';
@@ -122,12 +135,16 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
             label="Company"
             value={customer?.company_name}
           />
-          <InfoRow label="Contact" value={customer?.first_name} />
-          <InfoRow label="Phone Number" value={customer?.phone} />
+          <InfoRow icon="person-outline" label="Name" value={customer?.first_name} />
+          <InfoRow icon="call-outline" label="Phone Number" value={customer?.phone} />
           <InfoRow
             icon="location-outline"
             label="Delivery Address"
-            value={`${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}`}
+            value={selectedAddress?.street && selectedAddress?.street !== undefined
+            ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.zipCode}`
+            : customer?.delivery_address}
+              
+              // `${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}`}
           />
 
           <View

@@ -35,7 +35,7 @@ import { Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../constants/Color';
 
-const GradientButton = ({ title, colors, onPress, icon,disabled }) => {
+const GradientButton = ({ title, colors, onPress, icon, disabled ,font}) => {
   return (
     <LinearGradient
       colors={disabled ? [Colors.textGray, Colors.textGray] : colors}
@@ -50,7 +50,7 @@ const GradientButton = ({ title, colors, onPress, icon,disabled }) => {
         disabled={disabled}
       >
         {icon}
-        <Text style={styles.text}>{title}</Text>
+        <Text style={[styles.text, { fontSize: font ? 13 : 14 }]}>{title}</Text>
       </TouchableOpacity>
     </LinearGradient>
   );

@@ -5,13 +5,19 @@ import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../constants/Color';
 import { supabase } from '../lib/supabase';
 
-const MarkAllTransitCard = ({ orders = [] }) => {
+const MarkAllTransitCard = ({ orders = [], setMarkAllOrder, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
   // const count = orders.length;
+  // const eligibleOrders = orders.filter(
+  //   o => o.deliveryStatus !== 'completed' && o.deliveryStatus !== 'cancelled',
+  // );
   const eligibleOrders = orders.filter(
-    o => o.deliveryStatus !== 'completed' && o.deliveryStatus !== 'cancelled',
+    o =>
+      o.deliveryStatus !== 'completed' &&
+      o.deliveryStatus !== 'cancelled' &&
+      o.deliveryStatus !== 'in transit', // already transit exclude
   );
 
   const count = eligibleOrders.length;
@@ -20,7 +26,7 @@ const MarkAllTransitCard = ({ orders = [] }) => {
     try {
       setLoading(true);
 
-      const orderIds = eligibleOrders.map(o => o.id);
+      const orderIds = eligibleOrders?.map(o => o.id);
 
       if (!orderIds.length) {
         setShowConfirm(false);
@@ -34,7 +40,8 @@ const MarkAllTransitCard = ({ orders = [] }) => {
           updated_at: new Date().toISOString(),
         })
         .in('id', orderIds);
-
+      onSuccess();
+      setMarkAllOrder(true);
       if (error) {
         console.log('MARK TRANSIT ERROR:', error);
       }
@@ -67,6 +74,8 @@ const MarkAllTransitCard = ({ orders = [] }) => {
             <Text style={styles.btnText}>
               {loading
                 ? 'Updating...'
+                : count === 0
+                ? 'All Orders In Transit'
                 : `Mark All Orders In Transit (${count})`}
             </Text>
           </TouchableOpacity>
@@ -131,7 +140,7 @@ const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: Colors.cardBg,
     margin: 16,
-    marginHorizontal:32,
+    marginHorizontal: 32,
     borderRadius: 16,
     padding: 14,
     shadowColor: Colors.shadow,

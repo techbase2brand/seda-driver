@@ -30,17 +30,6 @@ export default function UpdateStatusScreen({ navigation, route }) {
       ? JSON.parse(order.customer_details)
       : order?.customer_details;
 
-  /* ================= IMAGE PICKERS ================= */
-
-  // const openCamera = () => {
-  //   launchCamera({ mediaType: 'photo', quality: 0.7 }, res => {
-  //     if (res.didCancel || res.errorCode) return;
-  //     setPhoto(res.assets[0]);
-  //   });
-  // };
-
-  // import { PermissionsAndroid, Platform } from 'react-native';
-
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {
       const granted = await PermissionsAndroid.request(

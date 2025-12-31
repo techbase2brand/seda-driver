@@ -79,6 +79,7 @@ import Feather from 'react-native-vector-icons/Feather';
 import Colors from '../constants/Color';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
+import { widthPercentageToDP } from '../utils';
 
 const DeliveriesHeader = ({ navigation,totaldeliveries }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -178,7 +179,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: widthPercentageToDP(10),
     paddingBottom: 55,
   },
 
