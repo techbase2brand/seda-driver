@@ -18,6 +18,26 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { ACTIVE_DELIVERIES } from '../constants/Constants';
 
+const OrderSection = ({ title, data, navigation }) => {
+  if (!data.length) return null;
+
+  return (
+    <View style={{ marginBottom: 24 }}>
+      <Text style={styles.title}>{title}</Text>
+
+      <FlatList
+        data={data}
+        keyExtractor={item => String(item.id)}
+        renderItem={({ item }) => (
+          <ActiveDeliveryCard item={item} navigation={navigation} />
+        )}
+        scrollEnabled={false}
+        showsVerticalScrollIndicator={false}
+      />
+    </View>
+  );
+};
+
 const DeliveriesScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true); // first load
@@ -25,7 +45,6 @@ const DeliveriesScreen = ({ navigation }) => {
   const [driverId, setDriverId] = useState(null);
   const [franchiseId, setFranchiseId] = useState(null);
   const [markAllOrder, setMarkAllOrder] = useState(false);
-  console.log('markAllOrdermarkAllOrder>>', markAllOrder);
 
   const loadIdsFromStorage = useCallback(async () => {
     const token = await AsyncStorage.getItem('token');
@@ -59,7 +78,7 @@ const DeliveriesScreen = ({ navigation }) => {
     };
 
     return [...ordersList].sort((a, b) => {
-      // 1️⃣ status priority
+      //  status priority
       const statusDiff =
         getPriority(a.deliveryStatus) - getPriority(b.deliveryStatus);
 
@@ -67,7 +86,7 @@ const DeliveriesScreen = ({ navigation }) => {
         return statusDiff;
       }
 
-      // 2️⃣ same status → sort by stop_number
+      //  same status → sort by stop_number
       const stopA = a.stop_number ?? 0;
       const stopB = b.stop_number ?? 0;
 
@@ -121,7 +140,7 @@ const DeliveriesScreen = ({ navigation }) => {
         console.log('Orders fetch:', data);
 
         const sortedOrders = sortOrdersByStatus(data);
-        setOrders(sortedOrders);
+        setOrders(data);
       } catch (e) {
         console.log('fetchOrders exception:', e);
         setOrders([]);
@@ -160,7 +179,6 @@ const DeliveriesScreen = ({ navigation }) => {
 
   const completedCount = completedOrders.length;
 
-  // 2️⃣ aaj ke completed orders
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -189,6 +207,37 @@ const DeliveriesScreen = ({ navigation }) => {
     );
   };
 
+  const sortActiveWithStop = list => {
+    return [...list].sort((a, b) => {
+      const aHasStop = a.stop_number != null;
+      const bHasStop = b.stop_number != null;
+
+      if (aHasStop && bHasStop) {
+        return a.stop_number - b.stop_number;
+      }
+
+      if (aHasStop && !bHasStop) return -1;
+
+      if (!aHasStop && bHasStop) return 1;
+
+      return 0;
+    });
+  };
+
+  const activeOrdersRaw = orders.filter(
+    item =>
+      item.deliveryStatus !== 'cancelled' &&
+      item.deliveryStatus !== 'completed',
+  );
+
+  const activeOrders = sortActiveWithStop(activeOrdersRaw);
+  const undeliveredOrders = orders?.filter(
+    item => item.deliveryStatus === 'cancelled',
+  );
+
+  const completedOrdersList = orders?.filter(
+    item => item.deliveryStatus === 'completed',
+  );
   return (
     <View style={styles.container}>
       <View style={{ position: 'relative', marginBottom: 100 }}>
@@ -204,33 +253,57 @@ const DeliveriesScreen = ({ navigation }) => {
           />
         </View>
       </View>
-      {/* <ScrollView showsVerticalScrollIndicator={false}> */}
-      <DeliveryStats orders={orders} />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <DeliveryStats orders={orders} />
 
-      <View style={{ padding: 16, flex: 1 }}>
-        <Text style={styles.title}>Active Deliveries</Text>
+        <View style={{ padding: 16, flex: 1 }}>
+          {/* <Text style={styles.title}>Active Deliveries</Text> */}
 
-        {loading ? (
-          <View style={styles.loaderWrap}>
-            <ActivityIndicator size="large" />
-            <Text style={styles.loaderText}>Loading orders...</Text>
-          </View>
-        ) : (
-          <FlatList
-            data={orders}
-            keyExtractor={item => String(item.id)}
-            renderItem={({ item }) => (
-              <ActiveDeliveryCard item={item} navigation={navigation} />
-            )}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={renderEmpty}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-          />
-        )}
-      </View>
-      {/* </ScrollView> */}
+          {loading ? (
+            <View style={styles.loaderWrap}>
+              <ActivityIndicator size="large" />
+              <Text style={styles.loaderText}>Loading orders...</Text>
+            </View>
+          ) : (
+            // <FlatList
+            //   data={orders}
+            //   keyExtractor={item => String(item.id)}
+            //   renderItem={({ item }) => (
+            //     <ActiveDeliveryCard item={item} navigation={navigation} />
+            //   )}
+            //   scrollEnabled={false}
+            //   showsVerticalScrollIndicator={false}
+            //   ListEmptyComponent={renderEmpty}
+            //   // refreshControl={
+            //   //   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            //   // }
+            // />
+            <>
+              <OrderSection
+                title="Active Deliveries"
+                data={activeOrders}
+                navigation={navigation}
+              />
+              <OrderSection
+                title="Undelivered Orders"
+                data={undeliveredOrders}
+                navigation={navigation}
+              />
+              <OrderSection
+                title="Completed Orders"
+                data={completedOrdersList}
+                navigation={navigation}
+              />
+              {!orders.length && renderEmpty()}
+            </>
+          )}
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -242,7 +315,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
 
   loaderWrap: {
-    flex: 1,
+    // flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 20,

@@ -16,7 +16,6 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
   };
   const companyDetail = JSON.parse(item?.customer_details);
   const rawAddresses = companyDetail?.delivery_address;
-  console.log('companyDetailcompanyDetail', companyDetail);
 
   // always convert to array
   const deliveryAddresses = Array.isArray(rawAddresses)
@@ -30,9 +29,6 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       ? deliveryAddresses[0]
       : deliveryAddresses.find(addr => addr?.isSelected === true);
 
-  // const selectedAddress =  companyDetail?.delivery_address?.find(
-  //   item => item?.isSelected === true,
-  // );
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -53,7 +49,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
               </Text>
             </LinearGradient>
           )}
-          <Text style={styles.order} numberOfLines={1} ellipsizeMode="tail">
+          <Text style={styles.order} ellipsizeMode="tail">
             {item.order_name}
           </Text>
         </View>
@@ -75,10 +71,10 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
           <Icon name="business-outline" size={18} />
           <Text style={styles.text}>{companyDetail?.company_name}</Text>
         </View>
-        <View
+        {/* <View
           style={[
             {
-              width: widthPercentageToDP(20),
+              width: widthPercentageToDP(23),
               borderRadius: 10,
               paddingVertical: 5,
               backgroundColor:
@@ -92,13 +88,39 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
             },
           ]}
         >
-          {/* <Icon name="business-outline" size={18} /> */}
+          
           <Text
             style={[{ color: '#fff', textAlign: 'center', fontWeight: '700' }]}
           >
-            {item?.deliveryStatus}
+            {item?.deliveryStatus == 'cancelled' ? "undelivered":item?.deliveryStatus}
           </Text>
-        </View>
+        </View> */}
+        {(item?.deliveryStatus === 'completed' ||
+          item?.deliveryStatus === 'cancelled') && (
+          <View
+            style={{
+              width: widthPercentageToDP(23),
+              borderRadius: 10,
+              paddingVertical: 5,
+              backgroundColor:
+                item?.deliveryStatus === 'completed' ? '#65c391ff' : '#FF3B30',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Text
+              style={{
+                color: '#fff',
+                textAlign: 'center',
+                fontWeight: '700',
+              }}
+            >
+              {item?.deliveryStatus === 'cancelled'
+                ? 'undelivered'
+                : item?.deliveryStatus}
+            </Text>
+          </View>
+        )}
       </View>
       <View style={styles.row}>
         <Icon name="location-outline" size={18} />
@@ -206,7 +228,7 @@ const styles = StyleSheet.create({
   order: {
     fontWeight: '600',
     fontSize: 14,
-    width: '48%',
+    // width: '1%',
   },
   qty: {
     color: Colors.textGray,
