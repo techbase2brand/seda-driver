@@ -9,7 +9,7 @@ import LinearGradient from 'react-native-linear-gradient';
 const ActiveDeliveryCard = ({ item, navigation }) => {
   const isOrderClosed =
     item?.deliveryStatus === 'completed' ||
-    item?.deliveryStatus === 'cancelled';
+    item?.deliveryStatus === 'unable to deliver';
 
   const handleNavigation = () => {
     navigation.navigate('UpdateStatusScreen', { order: item });
@@ -96,7 +96,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
           </Text>
         </View> */}
         {(item?.deliveryStatus === 'completed' ||
-          item?.deliveryStatus === 'cancelled') && (
+          item?.deliveryStatus === 'unable to deliver') && (
           <View
             style={{
               width: widthPercentageToDP(23),
@@ -115,7 +115,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
                 fontWeight: '700',
               }}
             >
-              {item?.deliveryStatus === 'cancelled'
+              {item?.deliveryStatus === 'unable to deliver'
                 ? 'undelivered'
                 : item?.deliveryStatus}
             </Text>

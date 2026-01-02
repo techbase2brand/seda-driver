@@ -48,7 +48,7 @@ export default function UnableToDeliverScreen({ navigation, route }) {
         .update({
           unable_to_deliver_reason: reason || null,
           unable_to_deliver_note: notes || null,
-          deliveryStatus: 'cancelled',
+          deliveryStatus: 'unable to deliver',
           updated_at: new Date().toISOString(),
         })
         .eq('id', OrderId);
