@@ -22,11 +22,11 @@
 //   const deliveryAddress = route?.params?.address;
 //   const orderId = route?.params?.order?.id;
 //   const driverId = route?.params?.order?.driver_id;
-  
+
 //   const selectedAddress = Array.isArray(deliveryAddress)
 //   && deliveryAddress.find(item => item.isSelected === true)
 //   // : deliveryAddress;
-  
+
 //   console.log("deliveryAddressdeliveryAddress",deliveryAddress,selectedAddress);
 
 //   const [currentLocation, setCurrentLocation] = useState(null);
@@ -174,7 +174,7 @@
 //   // 🔹 Address → Coordinates
 //   const getCoordinatesFromAddress = async address => {
 //     console.log("getCoordinatesFromAddress>>>",address);
-    
+
 //     try {
 //       const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
 //         address,
@@ -281,7 +281,6 @@
 //   },
 // });
 
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -299,8 +298,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Color from '../constants/Color';
 import { supabase } from '../lib/supabase';
 
-const GOOGLE_MAPS_APIKEY = 'AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI';
-
+const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
 const DriverMapScreen = ({ navigation, route }) => {
   const mapRef = useRef(null);
 
@@ -331,11 +329,7 @@ const DriverMapScreen = ({ navigation, route }) => {
     }
 
     if (typeof deliveryAddress === 'object' && deliveryAddress !== null) {
-      return (
-        deliveryAddress.address ||
-        deliveryAddress.delivery_address ||
-        ''
-      );
+      return deliveryAddress.address || deliveryAddress.delivery_address || '';
     }
 
     return '';

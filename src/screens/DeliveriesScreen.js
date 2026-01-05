@@ -73,7 +73,7 @@ const DeliveriesScreen = ({ navigation }) => {
 
     const getPriority = status => {
       if (status === 'completed') return 3;
-      if (status === 'cancelled') return 2;
+      if (status === 'unable to deliver') return 2;
       return 1; // in transit / pending
     };
 
@@ -226,13 +226,13 @@ const DeliveriesScreen = ({ navigation }) => {
 
   const activeOrdersRaw = orders.filter(
     item =>
-      item.deliveryStatus !== 'cancelled' &&
+      item.deliveryStatus !== 'unable to deliver' &&
       item.deliveryStatus !== 'completed',
   );
 
   const activeOrders = sortActiveWithStop(activeOrdersRaw);
   const undeliveredOrders = orders?.filter(
-    item => item.deliveryStatus === 'cancelled',
+    item => item.deliveryStatus === 'unable to deliver',
   );
 
   const completedOrdersList = orders?.filter(
