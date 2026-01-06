@@ -13,10 +13,10 @@ const MarkAllTransitCard = ({ orders = [], setMarkAllOrder, onSuccess }) => {
   // const eligibleOrders = orders.filter(
   //   o => o.deliveryStatus !== 'completed' && o.deliveryStatus !== 'cancelled',
   // );
-  const eligibleOrders = orders.filter(
+  const eligibleOrders = orders?.filter(
     o =>
       o.deliveryStatus !== 'completed' &&
-      o.deliveryStatus !== 'cancelled' &&
+      o.deliveryStatus !== 'unable to deliver' &&
       o.deliveryStatus !== 'in transit', // already transit exclude
   );
 

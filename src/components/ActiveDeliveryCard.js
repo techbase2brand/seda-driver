@@ -96,14 +96,20 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
           </Text>
         </View> */}
         {(item?.deliveryStatus === 'completed' ||
-          item?.deliveryStatus === 'unable to deliver') && (
+          item?.deliveryStatus === 'unable to deliver' ||
+          item?.deliveryStatus === 'in transit') && (
           <View
             style={{
               width: widthPercentageToDP(23),
               borderRadius: 10,
               paddingVertical: 5,
               backgroundColor:
-                item?.deliveryStatus === 'completed' ? '#65c391ff' : '#FF3B30',
+                item?.deliveryStatus == 'completed'
+                  ? '#65c391ff'
+                  : item?.deliveryStatus == 'unable to deliver'
+                  ? '#FF3B30'
+                  : '#3655f2e8',
+              // item?.deliveryStatus === 'completed' ? '#65c391ff' : '#FF3B30',
               alignItems: 'center',
               justifyContent: 'center',
             }}
@@ -115,7 +121,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
                 fontWeight: '700',
               }}
             >
-              {item?.deliveryStatus === 'unable to deliver'
+              {item?.deliveryStatus == 'unable to deliver'
                 ? 'undelivered'
                 : item?.deliveryStatus}
             </Text>

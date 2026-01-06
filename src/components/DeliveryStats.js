@@ -36,15 +36,19 @@ const DeliveryStats = ({ orders }) => {
   )?.length;
   const inProgressCount = orders?.filter(
     item => item?.deliveryStatus == 'in transit',
-  ).length;
+  )?.length;
+  const inAssignedCount = orders?.filter(
+    item => item?.deliveryStatus == 'driver assigned',
+  )?.length;
+
   return (
     <View style={styles.row}>
       <StatCard
         icon="cube-outline"
-        value={orders?.length}
+        value={inAssignedCount}
         label="Assigned"
         bg="#0A4DFF"
-        gradient={['#0a24a7ff', '#305FFD' ]}
+        gradient={['#0a24a7ff', '#305FFD']}
       />
       <StatCard
         icon="trending-up-outline"
