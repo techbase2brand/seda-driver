@@ -128,8 +128,7 @@ const DeliveriesHeader = ({ navigation,totaldeliveries }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>My Deliveries</Text>
-        <Text style={styles.subTitle}>Downtown District · Today</Text>
+        <Text style={styles.title}>My Deliveries</Text> 
       </View>
 
       {/* ===== LOGOUT CONFIRM MODAL ===== */}
