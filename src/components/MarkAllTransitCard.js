@@ -139,7 +139,7 @@ export default MarkAllTransitCard;
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: Colors.cardBg,
-    margin: 16,
+    marginTop: 16,
     marginHorizontal: 32,
     borderRadius: 16,
     padding: 14,

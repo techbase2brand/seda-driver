@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     padding: 20,
     paddingTop: 50,
-    paddingBottom: 55,
+    paddingBottom: 85,
     
   },
   back: {

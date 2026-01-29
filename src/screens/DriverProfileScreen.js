@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  ActivityIndicator,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Color from '../constants/Color';
 import { supabase } from '../lib/supabase';
@@ -9,14 +16,17 @@ const DriverProfileScreen = ({ navigation, route }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [driver, setDriver] = useState(null);
   const [loading, setLoading] = useState(true);
-  console.log('rouuttttee', route?.params?.totaldeliveries);
 
-  // ================= FETCH DRIVER =================
-  const fetchDriverProfile = async () => {
+  const totaldeliveries = route?.params?.totaldeliveries;
+
+  // ================= FETCH DRIVER (lightweight query, no blocking UI) =================
+  const fetchDriverProfile = useCallback(async () => {
     try {
       const driverId = await AsyncStorage.getItem('driver_id');
-
-      if (!driverId) return;
+      if (!driverId) {
+        setLoading(false);
+        return;
+      }
 
       const { data, error } = await supabase
         .from('drivers')
@@ -26,20 +36,19 @@ const DriverProfileScreen = ({ navigation, route }) => {
 
       if (error) {
         console.log('Driver fetch error:', error);
-        return;
+      } else {
+        setDriver(data);
       }
-
-      setDriver(data);
     } catch (err) {
       console.log('Fetch error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDriverProfile();
-  }, []);
+  }, [fetchDriverProfile]);
 
   // ================= INITIALS =================
   const getInitials = name => {
@@ -73,17 +82,10 @@ const DriverProfileScreen = ({ navigation, route }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading...</Text>
-      </View>
-    );
-  }
-
+  // Show profile layout immediately; only driver details show loading state (no blank screen)
   return (
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header - always visible */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backBtn}
@@ -94,13 +96,19 @@ const DriverProfileScreen = ({ navigation, route }) => {
 
         <View style={styles.avatarWrapper}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>
-              {getInitials(driver?.driver_name)}
-            </Text>
+            {loading ? (
+              <ActivityIndicator size="small" color="#4AA3DF" />
+            ) : (
+              <Text style={styles.avatarText}>
+                {getInitials(driver?.driver_name)}
+              </Text>
+            )}
           </View>
         </View>
 
-        <Text style={styles.name}>{driver?.driver_name || 'Driver'}</Text>
+        <Text style={styles.name}>
+          {loading ? 'Loading...' : driver?.driver_name || 'Driver'}
+        </Text>
 
         {/* <View style={styles.verified}>
           <Icon name="checkmark-circle" size={14} color="#22C55E" />
@@ -108,14 +116,14 @@ const DriverProfileScreen = ({ navigation, route }) => {
         </View> */}
       </View>
 
-      {/* Stats (unchanged) */}
+      {/* Stats - use route params (no fetch needed, already available) */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <View style={[styles.statIcon, { backgroundColor: '#4AA3DF' }]}>
             <Icon name="cube-outline" size={20} color="#fff" />
           </View>
           <Text style={styles.statValue}>
-            {route?.params?.totaldeliveries?.totalompleted}
+            {totaldeliveries?.totalompleted ?? '-'}
           </Text>
           <Text style={styles.statLabel}>Total Deliveries</Text>
         </View>
@@ -125,24 +133,33 @@ const DriverProfileScreen = ({ navigation, route }) => {
             <Icon name="trending-up" size={20} color="#fff" />
           </View>
           <Text style={styles.statValue}>
-            {route?.params?.totaldeliveries?.todaycompleted}
+            {totaldeliveries?.todaycompleted ?? '-'}
           </Text>
           <Text style={styles.statLabel}>Today</Text>
         </View>
       </View>
 
-      {/* Driver Info */}
+      {/* Driver Info - show placeholders while loading */}
       <View style={styles.infoCard}>
         <View style={styles.infoHeader}>
           <Icon name="person-outline" size={18} color="#4AA3DF" />
           <Text style={styles.infoTitle}> Driver Information</Text>
+          {loading && (
+            <ActivityIndicator
+              size="small"
+              color="#4AA3DF"
+              style={styles.infoLoader}
+            />
+          )}
         </View>
 
         <View style={styles.infoRow}>
           <Icon name="person-outline" size={18} color="#6B7280" />
           <View style={styles.infoText}>
             <Text style={styles.infoLabel}>Full Name</Text>
-            <Text style={styles.infoValue}>{driver?.driver_name || '-'}</Text>
+            <Text style={styles.infoValue}>
+              {loading ? '...' : driver?.driver_name || '-'}
+            </Text>
           </View>
         </View>
 
@@ -150,7 +167,9 @@ const DriverProfileScreen = ({ navigation, route }) => {
           <Icon name="mail-outline" size={18} color="#6B7280" />
           <View style={styles.infoText}>
             <Text style={styles.infoLabel}>Email Address</Text>
-            <Text style={styles.infoValue}>{driver?.email || '-'}</Text>
+            <Text style={styles.infoValue}>
+              {loading ? '...' : driver?.email || '-'}
+            </Text>
           </View>
         </View>
 
@@ -158,7 +177,9 @@ const DriverProfileScreen = ({ navigation, route }) => {
           <Icon name="call-outline" size={18} color="#6B7280" />
           <View style={styles.infoText}>
             <Text style={styles.infoLabel}>Phone Number</Text>
-            <Text style={styles.infoValue}>{driver?.phone_number || '-'}</Text>
+            <Text style={styles.infoValue}>
+              {loading ? '...' : driver?.phone_number || '-'}
+            </Text>
           </View>
         </View>
       </View>
@@ -241,7 +262,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: '#4FA3E3',
     paddingTop: 45,
-    paddingBottom: 50,
+    paddingBottom: 90,
     alignItems: 'center',
   },
 
@@ -305,7 +326,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    marginTop: -25,
+    marginTop: -55,
   },
 
   statCard: {
@@ -338,7 +359,7 @@ const styles = StyleSheet.create({
   infoCard: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    marginVertical: 30,
+    marginVertical: 20,
     borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 30,
@@ -348,6 +369,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 16,
+  },
+
+  infoLoader: {
+    marginLeft: 8,
   },
 
   infoTitle: {

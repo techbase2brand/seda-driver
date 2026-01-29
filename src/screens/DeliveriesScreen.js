@@ -254,7 +254,7 @@ const DeliveriesScreen = ({ navigation }) => {
       <View
         style={{
           position: 'relative',
-          marginBottom: hasEligibleOrders ? 100 : 10,
+          marginBottom: hasEligibleOrders ? 80 : 10,
         }}
       >
         <DeliveriesHeader
@@ -262,7 +262,7 @@ const DeliveriesScreen = ({ navigation }) => {
           totaldeliveries={totaldeliveries}
         />
         {hasEligibleOrders && (
-          <View style={{ position: 'absolute', top: '75%' }}>
+          <View style={{ position: 'absolute', top: '63%' }}>
             <MarkAllTransitCard
               orders={orders}
               setMarkAllOrder={setMarkAllOrder}

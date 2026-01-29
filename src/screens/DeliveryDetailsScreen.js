@@ -102,12 +102,12 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={{ position: 'relative', marginBottom: 120 }}>
+      <View style={{ position: 'relative', marginBottom: 80 }}>
         <HeaderBar navigation={navigation} orderName={order?.order_name} orderStop={order?.stop_number} />
         <View
           style={{
             position: 'absolute',
-            top: '70%',
+            top: '55%',
             width: '100%',
             padding: 16,
           }}

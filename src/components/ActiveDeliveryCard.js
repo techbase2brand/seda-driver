@@ -153,7 +153,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
             flexDirection: 'row',
             justifyContent: 'space-between',
             gap: 10,
-            width: widthPercentageToDP(80),
+            width: widthPercentageToDP(84),
           }}
         >
           <TouchableOpacity

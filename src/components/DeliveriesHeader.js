@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
     paddingTop: widthPercentageToDP(10),
-    paddingBottom: 35,
+    paddingBottom: 65,
   },
 
   row: {
@@ -201,6 +201,9 @@ const styles = StyleSheet.create({
   logout: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent:"center",
+    width:40,
+    height:40
   },
 
   logoutText: {
