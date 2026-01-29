@@ -238,20 +238,38 @@ const DeliveriesScreen = ({ navigation }) => {
   const completedOrdersList = orders?.filter(
     item => item.deliveryStatus === 'completed',
   );
+
+  // Calculate eligible orders for MarkAllTransitCard (same logic as in MarkAllTransitCard component)
+  const eligibleOrders = orders?.filter(
+    o =>
+      o.deliveryStatus !== 'completed' &&
+      o.deliveryStatus !== 'unable to deliver' &&
+      o.deliveryStatus !== 'in transit',
+  );
+
+  const hasEligibleOrders = eligibleOrders?.length > 0;
+
   return (
     <View style={styles.container}>
-      <View style={{ position: 'relative', marginBottom: 100 }}>
+      <View
+        style={{
+          position: 'relative',
+          marginBottom: hasEligibleOrders ? 100 : 10,
+        }}
+      >
         <DeliveriesHeader
           navigation={navigation}
           totaldeliveries={totaldeliveries}
         />
-        <View style={{ position: 'absolute', top: '75%' }}>
-          <MarkAllTransitCard
-            orders={orders}
-            setMarkAllOrder={setMarkAllOrder}
-            onSuccess={fetchOrders}
-          />
-        </View>
+        {hasEligibleOrders && (
+          <View style={{ position: 'absolute', top: '75%' }}>
+            <MarkAllTransitCard
+              orders={orders}
+              setMarkAllOrder={setMarkAllOrder}
+              onSuccess={fetchOrders}
+            />
+          </View>
+        )}
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}

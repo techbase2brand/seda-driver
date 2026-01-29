@@ -163,6 +163,24 @@ const DriverProfileScreen = ({ navigation, route }) => {
         </View>
       </View>
 
+      {/* Terms & Privacy - side by side */}
+      <View style={styles.legalRow}>
+        <TouchableOpacity
+          style={styles.legalBtn}
+          onPress={() => navigation.navigate('TermsAndConditionsScreen')}
+        >
+          <Icon name="document-text-outline" size={18} color="#4AA3DF" />
+          <Text style={styles.legalBtnText}>Terms & Conditions</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.legalBtn}
+          onPress={() => navigation.navigate('PrivacyPolicyScreen')}
+        >
+          <Icon name="shield-checkmark-outline" size={18} color="#4AA3DF" />
+          <Text style={styles.legalBtnText}>Privacy Policy</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutBtn}
@@ -357,6 +375,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#1F2937',
     fontWeight: '500',
+  },
+
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    gap: 12,
+  },
+
+  legalBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    gap: 6,
+  },
+
+  legalBtnText: {
+    fontSize: 12,
+    color: '#1F2937',
+    fontWeight: '600',
   },
 
   logoutBtn: {

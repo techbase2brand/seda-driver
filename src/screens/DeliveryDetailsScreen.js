@@ -97,6 +97,9 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
     //     Alert.alert('Error', 'Map Not working'),
     //   );
   };
+
+  const isDelivered = order?.deliveryStatus === 'completed';
+
   return (
     <ScrollView style={styles.container}>
       <View style={{ position: 'relative', marginBottom: 120 }}>
@@ -155,7 +158,7 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
               marginTop: 24,
             }}
           >
-            <View style={{ width: '50%' }}>
+            <View style={{ width: isDelivered ? '100%' : '50%' }}>
               <ActionButton
                 title="Call"
                 icon="call-outline"
@@ -163,27 +166,33 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
                 onPress={() => onCallPress(customer?.phone)}
               />
             </View>
-            <View style={{ width: '50%' }}>
-              <ActionButton
-                title="Navigate"
-                icon="navigate-outline"
-                colors={[Colors.PRIMARY_LOW, Colors.PRIMARY_DARK]}
-                onPress={() => onNavigatePress(customer?.delivery_address)}
-              />
-            </View>
+            {!isDelivered && (
+              <View style={{ width: '50%' }}>
+                <ActionButton
+                  title="Navigate"
+                  icon="navigate-outline"
+                  colors={[Colors.PRIMARY_LOW, Colors.PRIMARY_DARK]}
+                  onPress={() => onNavigatePress(selectedAddress || customer?.delivery_address)}
+                />
+              </View>
+            )}
           </View>
         </InfoCard>
 
-        <InfoCard title="Delivery Instructions">
-          <InstructionCard />
-        </InfoCard>
+        {!isDelivered && (
+          <>
+            <InfoCard title="Delivery Instructions">
+              <InstructionCard />
+            </InfoCard>
 
-        <ActionButton
-          title="Mark as Delivered"
-          icon="checkmark-circle-outline"
-          colors={Colors.successGradient}
-          onPress={deliveredNavigation}
-        />
+            <ActionButton
+              title="Mark as Delivered"
+              icon="checkmark-circle-outline"
+              colors={Colors.successGradient}
+              onPress={deliveredNavigation}
+            />
+          </>
+        )}
       </View>
     </ScrollView>
   );

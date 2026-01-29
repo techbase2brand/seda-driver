@@ -81,7 +81,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { widthPercentageToDP } from '../utils';
 
-const DeliveriesHeader = ({ navigation,totaldeliveries }) => {
+const DeliveriesHeader = ({ navigation, totaldeliveries }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleConfirmLogout = async () => {
@@ -120,7 +120,11 @@ const DeliveriesHeader = ({ navigation,totaldeliveries }) => {
 
           <TouchableOpacity
             style={styles.logout}
-            onPress={() => navigation.navigate('DriverProfileScreen',{totaldeliveries:totaldeliveries})}
+            onPress={() =>
+              navigation.navigate('DriverProfileScreen', {
+                totaldeliveries: totaldeliveries,
+              })
+            }
             // onPress={() => setShowLogoutModal(true)}
           >
             <Feather name="user" size={20} color={Colors.WHITE} />
@@ -128,7 +132,7 @@ const DeliveriesHeader = ({ navigation,totaldeliveries }) => {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.title}>My Deliveries</Text> 
+        <Text style={styles.title}>My Deliveries</Text>
       </View>
 
       {/* ===== LOGOUT CONFIRM MODAL ===== */}
@@ -179,7 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
     paddingTop: widthPercentageToDP(10),
-    paddingBottom: 55,
+    paddingBottom: 35,
   },
 
   row: {

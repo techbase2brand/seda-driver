@@ -11,9 +11,8 @@ import UpdateStatusScreen from '../screens/UpdateStatusScreen';
 import UnableToDeliverScreen from '../screens/UnableToDeliverScreen';
 import DriverMapScreen from '../screens/DriverMapScreen';
 import DriverProfileScreen from '../screens/DriverProfileScreen';
-
-
-
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
 import AuthStack from './AuthStack';
 
@@ -60,9 +59,8 @@ export default function DeliveryStack() {
       <Stack.Screen name="UnableToDeliverScreen" component={UnableToDeliverScreen} />
       <Stack.Screen name="DriverMapScreen" component={DriverMapScreen} />
       <Stack.Screen name="DriverProfileScreen" component={DriverProfileScreen} />
-
-
-
+      <Stack.Screen name="TermsAndConditionsScreen" component={TermsAndConditionsScreen} />
+      <Stack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} />
 
 
       {/* <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
