@@ -34,6 +34,7 @@ import React from 'react';
 import { Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../constants/Color';
+import { fontFamilyBody } from '../constants/Fonts';
 
 const GradientButton = ({ title, colors, onPress, icon, disabled ,font}) => {
   return (
@@ -77,5 +78,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 6,
     fontSize: 14,
+    fontFamily: fontFamilyBody,
   },
 });

@@ -14,6 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import COLORS from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 
 export default function UpdateStatusScreen({ navigation, route }) {
@@ -314,7 +315,7 @@ export default function UpdateStatusScreen({ navigation, route }) {
         <TouchableOpacity
           style={styles.unableBtn}
           onPress={() =>
-            navigation.navigate('UnableToDeliverScreen', { orderId: OrderId })
+            navigation.navigate('UnableToDeliverScreen', { order: order })
           }
         >
           <Icon name="alert-circle-outline" size={18} color={COLORS.ERROR} />
@@ -335,14 +336,26 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: COLORS.PRIMARY,
     padding: 20,
-    paddingTop: 50,
+    // paddingTop: 50,
+    paddingTop: Platform.OS === 'ios' ? 50 : 20,
+
     paddingBottom: 55,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  headerTitle: { color: COLORS.WHITE, fontSize: 18, fontWeight: '600' },
-  headerSub: { color: COLORS.WHITE, fontSize: 12, marginTop: 2 },
+  headerTitle: {
+    color: COLORS.WHITE,
+    fontSize: 18,
+    fontWeight: '600',
+    fontFamily: fontFamilyHeading,
+  },
+  headerSub: {
+    color: COLORS.WHITE,
+    fontSize: 12,
+    marginTop: 2,
+    fontFamily: fontFamilyBody,
+  },
   content: { padding: 16 },
   card: {
     flexDirection: 'row',
@@ -362,14 +375,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginRight: 12,
   },
-  sectionTitle: { fontWeight: '600', marginBottom: 8 },
+  sectionTitle: {
+    fontWeight: '600',
+    marginBottom: 8,
+    fontFamily: fontFamilyHeading,
+  },
   inputBox: {
     backgroundColor: COLORS.WHITE,
     padding: 12,
     borderRadius: 10,
     marginBottom: 16,
   },
-  inputLabel: { fontSize: 12, color: COLORS.TEXT },
+  inputLabel: { fontSize: 12, color: COLORS.TEXT, fontFamily: fontFamilyBody },
   input: {
     borderWidth: 1,
     borderColor: COLORS.BORDER,
@@ -379,7 +396,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.WHITE,
   },
   textArea: { height: 90, textAlignVertical: 'top' },
-  helperText: { fontSize: 11, color: COLORS.PLACEHOLDER, marginTop: 6 },
+  helperText: {
+    fontSize: 11,
+    color: COLORS.PLACEHOLDER,
+    marginTop: 6,
+    fontFamily: fontFamilyBody,
+  },
   photoBox: {
     backgroundColor: '#F8F8F8',
     borderWidth: 1,
@@ -390,7 +412,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   previewImage: { width: '100%', height: 180, borderRadius: 10 },
-  noPhotoText: { marginTop: 6, fontWeight: '500' },
+  noPhotoText: { marginTop: 6, fontWeight: '500', fontFamily: fontFamilyBody },
   photoActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -407,7 +429,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
-  outlineText: { color: COLORS.PRIMARY, fontWeight: '500' },
+  outlineText: {
+    color: COLORS.PRIMARY,
+    fontWeight: '500',
+    fontFamily: fontFamilyBody,
+  },
   submitBtn: {
     backgroundColor: COLORS.PRIMARY,
     padding: 14,
@@ -416,7 +442,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   submitDisabled: { backgroundColor: COLORS.DISABLED },
-  errorText: { color: COLORS.ERROR, fontSize: 11, marginVertical: 6 },
+  errorText: {
+    color: COLORS.ERROR,
+    fontSize: 11,
+    marginVertical: 6,
+    fontFamily: fontFamilyBody,
+  },
   unableBtn: {
     borderWidth: 1,
     borderColor: COLORS.ERROR,
@@ -427,14 +458,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 8,
   },
-  unableText: { color: COLORS.ERROR, fontWeight: '600' },
+  unableText: {
+    color: COLORS.ERROR,
+    fontWeight: '600',
+    fontFamily: fontFamilyBody,
+  },
   footerNote: {
     textAlign: 'center',
     fontSize: 11,
     color: COLORS.PLACEHOLDER,
     marginTop: 16,
+    fontFamily: fontFamilyBody,
   },
-  smallLabel: { fontSize: 11, color: COLORS.PLACEHOLDER },
-  boldText: { fontWeight: '600' },
-  smallText: { fontSize: 12, color: COLORS.PLACEHOLDER },
+  smallLabel: {
+    fontSize: 11,
+    color: COLORS.PLACEHOLDER,
+    fontFamily: fontFamilyBody,
+  },
+  boldText: { fontWeight: '600', fontFamily: fontFamilyBody },
+  smallText: {
+    fontSize: 12,
+    color: COLORS.PLACEHOLDER,
+    fontFamily: fontFamilyBody,
+  },
 });

@@ -1,5 +1,26 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import normalizeText from './normalizetext';
+
+/**
+ * Font Family Configuration
+ * Centralized font family definition for the entire app
+ * iOS uses font family names from font files, Android uses filenames
+ */
+
+
+// Garamond Pro - Used for titles, headings, and headlines
+// iOS: "Garamond Premier Pro" (font family name from font file)
+// Android: "garamondPro" (filename without extension)
+export const fontFamilyHeading = Platform.OS === 'ios' ? 'Garamond Premier Pro' : 'garamondPro';
+
+// Quicksand - Used for body text (clean and modern)
+// iOS: "Quicksand" (font family name from font file)
+// Android: "quickSand" (filename without extension)
+export const fontFamilyBody = Platform.OS === 'ios' ? 'Quicksand' : 'quickSand';
+
+// Default font (for backward compatibility, using Quicksand for body text)
+export const fontFamily = fontFamilyBody;
+
 export const baseFontSize = 14;
 export const baseSpacing = 4;
 

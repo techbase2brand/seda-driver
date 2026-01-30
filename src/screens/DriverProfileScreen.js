@@ -6,9 +6,11 @@ import {
   TouchableOpacity,
   Modal,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Color from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -261,7 +263,7 @@ const styles = StyleSheet.create({
 
   header: {
     backgroundColor: '#4FA3E3',
-    paddingTop: 45,
+    paddingTop: Platform.OS === 'ios' ? 45 : 10,
     paddingBottom: 90,
     alignItems: 'center',
   },
@@ -269,7 +271,7 @@ const styles = StyleSheet.create({
   backBtn: {
     position: 'absolute',
     left: 16,
-    top: 60,
+    top: Platform.OS === 'ios' ? 60 : 30,
   },
 
   avatarWrapper: {
@@ -287,8 +289,9 @@ const styles = StyleSheet.create({
 
   avatarText: {
     fontSize: 28,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#4AA3DF',
+    fontFamily: fontFamilyHeading,
   },
 
   cameraIcon: {
@@ -305,6 +308,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 18,
     fontWeight: '600',
+    fontFamily: fontFamilyHeading,
   },
 
   verified: {
@@ -320,6 +324,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     color: '#fff',
     fontSize: 12,
+    fontFamily: fontFamilyBody,
   },
 
   statsRow: {
@@ -347,13 +352,15 @@ const styles = StyleSheet.create({
 
   statValue: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#1F2937',
+    fontFamily: fontFamilyHeading,
   },
 
   statLabel: {
     fontSize: 12,
     color: '#6B7280',
+    fontFamily: fontFamilyBody,
   },
 
   infoCard: {
@@ -379,6 +386,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#1F2937',
+    fontFamily: fontFamilyHeading,
   },
 
   infoRow: {
@@ -394,12 +402,14 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 12,
     color: '#6B7280',
+    fontFamily: fontFamilyBody,
   },
 
   infoValue: {
     fontSize: 14,
     color: '#1F2937',
     fontWeight: '500',
+    fontFamily: fontFamilyBody,
   },
 
   legalRow: {
@@ -428,6 +438,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#1F2937',
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 
   logoutBtn: {
@@ -444,6 +455,7 @@ const styles = StyleSheet.create({
   logoutText: {
     color: '#EF4444',
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 
   version: {
@@ -451,6 +463,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     fontSize: 12,
     color: '#9CA3AF',
+    fontFamily: fontFamilyBody,
   },
   /* ===== MODAL ===== */
 
@@ -473,6 +486,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 10,
+    fontFamily: fontFamilyHeading,
   },
 
   modalText: {
@@ -480,6 +494,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Color.grayText,
     marginVertical: 12,
+    fontFamily: fontFamilyBody,
   },
 
   modalActions: {
@@ -510,10 +525,12 @@ const styles = StyleSheet.create({
   cancelText: {
     color: Color.grayText,
     fontWeight: '500',
+    fontFamily: fontFamilyBody,
   },
 
   confirmText: {
     color: Color.WHITE,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 });

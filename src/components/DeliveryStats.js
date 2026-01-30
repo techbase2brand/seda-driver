@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { DELIVERY_SUMMARY } from '../constants/Constants';
 import LinearGradient from 'react-native-linear-gradient';
 
@@ -96,13 +97,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   value: {
-    fontWeight: '700',
+    fontWeight: '600',
     fontSize: 18,
     marginTop: 8,
+    fontFamily: fontFamilyHeading,
   },
   label: {
     color: Colors.grayText,
     fontSize: 12,
     marginTop: 2,
+    fontFamily: fontFamilyBody,
   },
 });

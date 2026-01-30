@@ -15,6 +15,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import COLORS from '../constants/Color';
 import { STRINGS } from '../constants/Constants';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import AppButton from '../components/CustomButton';
 import { supabase } from '../lib/supabase';
 
@@ -227,6 +228,7 @@ const DeliveryLoginScreen = ({ navigation }) => {
           autoCapitalize="none"
         />
         {errors.email && <Text style={styles.error}>{errors.email}</Text>}
+        <Text style={styles.label}>{STRINGS.PASSWORD}</Text>
 
         <View
           style={[
@@ -293,17 +295,20 @@ const styles = StyleSheet.create({
   portalText: {
     color: COLORS.WHITE,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '600',
     textAlign: 'center',
     color: COLORS.TEXT,
+    fontFamily: fontFamilyHeading,
   },
   subTitle: {
     textAlign: 'center',
     color: COLORS.PLACEHOLDER,
     marginBottom: 20,
+    fontFamily: fontFamilyBody,
   },
   card: {
     backgroundColor: COLORS.WHITE,
@@ -314,12 +319,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 6,
     marginTop: 10,
+    fontFamily: fontFamilyBody,
   },
   input: {
     borderWidth: 1,
     borderColor: COLORS.BORDER,
     borderRadius: 10,
     padding: 12,
+    fontFamily: fontFamilyBody,
   },
   passwordContainer: {
     flexDirection: 'row',
@@ -328,15 +335,16 @@ const styles = StyleSheet.create({
     borderColor: COLORS.BORDER,
     borderRadius: 10,
     paddingHorizontal: 12,
-    marginTop: 14,
   },
   passwordInput: {
     flex: 1,
     paddingVertical: 12,
+    fontFamily: fontFamilyBody,
   },
   error: {
     color: COLORS.ERROR,
     fontSize: 12,
     marginTop: 4,
+    fontFamily: fontFamilyBody,
   },
 });

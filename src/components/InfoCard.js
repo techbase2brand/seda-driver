@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 
 const InfoRow = ({ label, value, icon }) => (
   <View style={styles.row}>
@@ -32,8 +33,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   heading: {
-    fontWeight: '700',
+    fontWeight: '600',
     marginBottom: 12,
+    fontFamily: fontFamilyHeading,
   },
   row: {
     flexDirection: 'row',
@@ -42,11 +44,13 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     color: Colors.textGray,
+    fontFamily: fontFamilyBody,
   },
   value: {
     fontSize: 14,
     color: Colors.TEXT,
     marginTop: 2,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 });

@@ -10,10 +10,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 
 const PrivacyPolicyScreen = ({ navigation }) => {
   return (
@@ -168,7 +170,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop:55
+    paddingTop:Platform.OS === 'ios' ? 55 : 15
   },
   backButton: {
     flexDirection: 'row',
@@ -179,6 +181,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     marginLeft: 8,
+    fontFamily: fontFamilyBody,
   },
   content: {
     padding: 20,
@@ -186,27 +189,30 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '600',
     color: Colors.TEXT,
     marginBottom: 20,
     textAlign: 'center',
+    fontFamily: fontFamilyHeading,
   },
   lastUpdated: {
     fontSize: 14,
     color: Colors.textGray,
     marginBottom: 24,
+    fontFamily: fontFamilyBody,
   },
   section: {
     marginBottom: 22,
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: Colors.TEXT,
     marginBottom: 10,
     paddingBottom: 6,
     borderBottomWidth: 1,
     borderBottomColor: Colors.BORDER,
+    fontFamily: fontFamilyHeading,
   },
   sectionText: {
     fontSize: 15,
@@ -214,6 +220,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     marginBottom: 0,
     textAlign: 'left',
+    fontFamily: fontFamilyBody,
   },
   bulletList: {
     marginLeft: 4,
@@ -228,6 +235,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingLeft: 4,
     textAlign: 'left',
+    fontFamily: fontFamilyBody,
   },
   contactInfo: {
     marginTop: 12,
@@ -238,11 +246,13 @@ const styles = StyleSheet.create({
     color: Colors.textGray,
     lineHeight: 22,
     marginBottom: 6,
+    fontFamily: fontFamilyBody,
   },
   thankYouText: {
     marginTop: 12,
     fontWeight: '600',
     color: Colors.TEXT,
+    fontFamily: fontFamilyHeading,
   },
   disclaimerBox: {
     backgroundColor: Colors.PRIMARY,
@@ -255,6 +265,7 @@ const styles = StyleSheet.create({
     color: Colors.WHITE,
     lineHeight: 22,
     textAlign: 'center',
+    fontFamily: fontFamilyBody,
   },
 });
 

@@ -1,9 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Platform,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 
-const HeaderBar = ({ navigation,orderName,orderStop }) => {
+const HeaderBar = ({ navigation, orderName, orderStop }) => {
   return (
     <View style={styles.header}>
       <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -21,7 +28,10 @@ const HeaderBar = ({ navigation,orderName,orderStop }) => {
       </View>
 
       <View style={styles.stopBadge}>
-        <Text style={styles.stopText}>Stop{'\n'}{orderStop}</Text>
+        <Text style={styles.stopText}>
+          Stop{'\n'}
+          {orderStop}
+        </Text>
       </View>
     </View>
   );
@@ -33,9 +43,9 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.PRIMARY,
     padding: 20,
-    paddingTop: 50,
+    // paddingTop: 50,
+    paddingTop: Platform.OS === 'ios' ? 50 : 10,
     paddingBottom: 85,
-    
   },
   back: {
     flexDirection: 'row',
@@ -48,18 +58,20 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.WHITE,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 10,
+    fontFamily: fontFamilyHeading,
   },
   sub: {
     color: Colors.WHITE,
     opacity: 0.9,
     marginTop: 2,
+    fontFamily: fontFamilyBody,
   },
   stopBadge: {
     position: 'absolute',
     right: 20,
-    top: 60,
+    top: Platform.OS === 'ios' ? 50 : 15,
     backgroundColor: '#FFFFFF40',
     borderRadius: 80,
     padding: 8,
@@ -71,5 +83,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '700',
+    fontFamily: fontFamilyBody,
   },
 });

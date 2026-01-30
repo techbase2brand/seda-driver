@@ -8,9 +8,11 @@ import {
   ScrollView,
   Image,
   Alert,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 
 const COLORS = {
@@ -69,6 +71,7 @@ export default function UnableToDeliverScreen({ navigation, route }) {
     }
   };
   const isSubmitEnabled = reason.trim().length > 0;
+  console.log('order:::', OrderId);
 
   return (
     <View style={styles.container}>
@@ -169,7 +172,7 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: COLORS.RED,
     padding: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'ios' ? 60 : 20,
     paddingBottom: 55,
     flexDirection: 'row',
     alignItems: 'center',
@@ -179,8 +182,9 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontSize: 18,
     fontWeight: '600',
+    fontFamily: fontFamilyHeading,
   },
-  headerSub: { color: COLORS.WHITE, fontSize: 12 },
+  headerSub: { color: COLORS.WHITE, fontSize: 12, fontFamily: fontFamilyBody },
 
   content: { padding: 16 },
 
@@ -214,14 +218,20 @@ const styles = StyleSheet.create({
   warningTitle: {
     color: COLORS.ERROR,
     fontWeight: '600',
+    fontFamily: fontFamilyHeading,
   },
   warningText: {
     fontSize: 12,
     color: COLORS.ERROR,
     marginTop: 2,
+    fontFamily: fontFamilyBody,
   },
 
-  sectionTitle: { fontWeight: '600', marginBottom: 8 },
+  sectionTitle: {
+    fontWeight: '600',
+    marginBottom: 8,
+    fontFamily: fontFamilyHeading,
+  },
 
   input: {
     borderWidth: 1,
@@ -241,6 +251,7 @@ const styles = StyleSheet.create({
     color: COLORS.PLACEHOLDER,
     marginTop: 6,
     marginBottom: 12,
+    fontFamily: fontFamilyBody,
   },
 
   photoBox: {
@@ -259,7 +270,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
 
-  noPhotoText: { marginTop: 6, fontWeight: '500' },
+  noPhotoText: { marginTop: 6, fontWeight: '500', fontFamily: fontFamilyBody },
 
   photoActions: {
     flexDirection: 'row',
@@ -292,6 +303,7 @@ const styles = StyleSheet.create({
     color: COLORS.ERROR,
     fontSize: 11,
     marginVertical: 6,
+    fontFamily: fontFamilyBody,
   },
 
   footerNote: {
@@ -299,9 +311,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.PLACEHOLDER,
     marginTop: 16,
+    fontFamily: fontFamilyBody,
   },
 
-  smallLabel: { fontSize: 11, color: COLORS.PLACEHOLDER },
-  boldText: { fontWeight: '600' },
-  smallText: { fontSize: 12, color: COLORS.PLACEHOLDER },
+  smallLabel: {
+    fontSize: 11,
+    color: COLORS.PLACEHOLDER,
+    fontFamily: fontFamilyBody,
+  },
+  boldText: { fontWeight: '600', fontFamily: fontFamilyBody },
+  smallText: {
+    fontSize: 12,
+    color: COLORS.PLACEHOLDER,
+    fontFamily: fontFamilyBody,
+  },
 });

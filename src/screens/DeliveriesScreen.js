@@ -14,6 +14,7 @@ import DeliveriesHeader from '../components/DeliveriesHeader';
 import MarkAllTransitCard from '../components/MarkAllTransitCard';
 import DeliveryStats from '../components/DeliveryStats';
 
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { ACTIVE_DELIVERIES } from '../constants/Constants';
@@ -330,7 +331,7 @@ export default DeliveriesScreen;
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  title: { fontSize: 18, fontWeight: '700', marginBottom: 12 },
+  title: { fontSize: 18, fontWeight: '600', marginBottom: 12, fontFamily: fontFamilyHeading },
 
   loaderWrap: {
     // flex: 1,
@@ -338,12 +339,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: 20,
   },
-  loaderText: { marginTop: 10, fontSize: 14, opacity: 0.7 },
+  loaderText: { marginTop: 10, fontSize: 14, opacity: 0.7, fontFamily: fontFamilyBody },
 
   emptyWrap: {
     paddingVertical: 40,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyText: { fontSize: 14, opacity: 0.6 },
+  emptyText: { fontSize: 14, opacity: 0.6, fontFamily: fontFamilyBody },
 });

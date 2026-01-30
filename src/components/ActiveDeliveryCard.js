@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import GradientButton from './GradientButton';
 import { widthPercentageToDP } from '../utils';
 import LinearGradient from 'react-native-linear-gradient';
@@ -41,7 +42,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
               style={styles.iconBox}
             >
               <Text
-                style={{ color: '#fff', fontWeight: '800' }}
+                style={[styles.stopNumberText]}
                 numberOfLines={1}
                 ellipsizeMode="tail"
               >
@@ -114,13 +115,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
               justifyContent: 'center',
             }}
           >
-            <Text
-              style={{
-                color: '#fff',
-                textAlign: 'center',
-                fontWeight: '700',
-              }}
-            >
+            <Text style={[styles.statusBadgeText]}>
               {item?.deliveryStatus == 'unable to deliver'
                 ? 'undelivered'
                 : item?.deliveryStatus}
@@ -174,7 +169,16 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
               })
             }
           >
-            <Text>View Detail</Text>
+            <Text
+              style={{
+                color: 'black',
+                fontWeight: '600',
+                fontSize: 14,
+                fontFamily: fontFamilyBody,
+              }}
+            >
+              View Detail
+            </Text>
           </TouchableOpacity>
           <View style={{ width: '50%' }}>
             <GradientButton
@@ -231,13 +235,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
+  stopNumberText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontFamily: fontFamilyBody,
+  },
   order: {
     fontWeight: '600',
     fontSize: 14,
-    // width: '1%',
+    fontFamily: fontFamilyBody,
   },
   qty: {
     color: Colors.textGray,
+    fontFamily: fontFamilyBody,
   },
   row: {
     flexDirection: 'row',
@@ -249,7 +259,14 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     color: Colors.TEXT,
     flex: 1,
+    fontWeight: '600',
+    fontFamily: fontFamilyBody,
+  },
+  statusBadgeText: {
+    color: '#fff',
+    textAlign: 'center',
     fontWeight: '700',
+    fontFamily: fontFamilyBody,
   },
   actions: {
     marginTop: 12,

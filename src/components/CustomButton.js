@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import COLORS from '../constants/Color';
+import { fontFamilyBody } from '../constants/Fonts';
 
 const CustomButton = ({ title, onPress }) => {
   return (
@@ -24,5 +25,6 @@ const styles = StyleSheet.create({
     color: COLORS.WHITE,
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 });

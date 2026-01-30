@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyBody } from '../constants/Fonts';
 
 const ActionButton = ({ title, icon, colors, onPress }) => {
   return (
@@ -37,5 +38,6 @@ const styles = StyleSheet.create({
     color: Colors.WHITE,
     marginLeft: 8,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 });

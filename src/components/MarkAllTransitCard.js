@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 
 const MarkAllTransitCard = ({ orders = [], setMarkAllOrder, onSuccess }) => {
@@ -105,7 +106,7 @@ const MarkAllTransitCard = ({ orders = [], setMarkAllOrder, onSuccess }) => {
 
             <Text style={styles.modalText}>
               Are you sure you want to mark all {count} orders as{' '}
-              <Text style={{ fontWeight: '600' }}>In Transit</Text>?
+              <Text style={styles.inlineBold}>In Transit</Text>?
             </Text>
 
             <View style={styles.modalActions}>
@@ -168,6 +169,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
     fontSize: 14,
+    fontFamily: fontFamilyBody,
   },
 
   info: {
@@ -175,6 +177,7 @@ const styles = StyleSheet.create({
     color: Colors.grayText,
     textAlign: 'center',
     fontSize: 12,
+    fontFamily: fontFamilyBody,
   },
 
   /* ===== MODAL ===== */
@@ -198,6 +201,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginTop: 10,
+    fontFamily: fontFamilyHeading,
   },
 
   modalText: {
@@ -205,6 +209,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.grayText,
     marginVertical: 12,
+    fontFamily: fontFamilyBody,
   },
 
   modalActions: {
@@ -235,10 +240,16 @@ const styles = StyleSheet.create({
   cancelText: {
     color: Colors.grayText,
     fontWeight: '500',
+    fontFamily: fontFamilyBody,
   },
 
   confirmText: {
     color: Colors.WHITE,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
+  },
+  inlineBold: {
+    fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 });

@@ -72,11 +72,13 @@ import {
   TouchableOpacity,
   Image,
   Modal,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Feather from 'react-native-vector-icons/Feather';
 
 import Colors from '../constants/Color';
+import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { widthPercentageToDP } from '../utils';
@@ -182,13 +184,15 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
-    paddingTop: widthPercentageToDP(10),
+    paddingTop:
+    Platform.OS === 'ios' ? widthPercentageToDP(10) : widthPercentageToDP(4),
     paddingBottom: 65,
   },
 
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    marginBottom: 12,
   },
 
   logo: {
@@ -201,9 +205,9 @@ const styles = StyleSheet.create({
   logout: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent:"center",
-    width:40,
-    height:40
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
   },
 
   logoutText: {
@@ -215,13 +219,16 @@ const styles = StyleSheet.create({
   title: {
     color: Colors.WHITE,
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     marginTop: 16,
+    marginBottom: 8,
+    fontFamily: fontFamilyHeading,
   },
 
   subTitle: {
     color: Colors.WHITE,
     marginTop: 4,
+    marginBottom: 4,
   },
 
   /* ===== MODAL ===== */
@@ -239,25 +246,31 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
+    marginBottom: 20,
   },
 
   modalTitle: {
     fontSize: 16,
     fontWeight: '600',
     marginTop: 10,
+    marginBottom: 12,
+    fontFamily: fontFamilyHeading,
   },
 
   modalText: {
     textAlign: 'center',
     fontSize: 13,
     color: Colors.grayText,
-    marginVertical: 12,
+    marginTop: 0,
+    marginBottom: 16,
+    fontFamily: fontFamilyBody,
   },
 
   modalActions: {
     flexDirection: 'row',
     width: '100%',
     marginTop: 10,
+    marginBottom: 8,
   },
 
   cancelBtn: {
@@ -267,6 +280,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginRight: 8,
+    marginBottom: 8,
     alignItems: 'center',
   },
 
@@ -276,16 +290,19 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 10,
     marginLeft: 8,
+    marginBottom: 8,
     alignItems: 'center',
   },
 
   cancelText: {
     color: Colors.grayText,
     fontWeight: '500',
+    fontFamily: fontFamilyBody,
   },
 
   confirmText: {
     color: Colors.WHITE,
     fontWeight: '600',
+    fontFamily: fontFamilyBody,
   },
 });

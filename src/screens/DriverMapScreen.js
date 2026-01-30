@@ -296,6 +296,7 @@ import MapViewDirections from 'react-native-maps-directions';
 import Geolocation from '@react-native-community/geolocation';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Color from '../constants/Color';
+import { fontFamilyHeading } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 
 const GOOGLE_MAPS_APIKEY = 'AIzaSyBtb6hSmwJ9_OznDC5e8BcZM90ms4WD_DE';
@@ -513,6 +514,7 @@ const styles = StyleSheet.create({
   title: {
     color: Color.WHITE,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '600',
+    fontFamily: fontFamilyHeading,
   },
 });

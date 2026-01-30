@@ -2,6 +2,7 @@ import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
+import { fontFamilyBody } from '../constants/Fonts';
 
 const InstructionCard = () => {
   return (
@@ -28,5 +29,6 @@ const styles = StyleSheet.create({
     color: Colors.PRIMARY_DARK,
     fontSize: 13,
     flex: 1,
+    fontFamily: fontFamilyBody,
   },
 });
