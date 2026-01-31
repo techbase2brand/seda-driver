@@ -10,6 +10,14 @@ export const STRINGS = {
   EMAIL_REQUIRED: 'Email is required',
   EMAIL_INVALID: 'Please enter a valid email address',
   PASSWORD_REQUIRED: 'Password is required',
+  FORGOT_PASSWORD: 'Forgot Password?',
+  SEND_OTP: 'Send OTP',
+  ENTER_OTP: 'Enter 6-digit OTP',
+  VERIFY_OTP: 'Verify OTP',
+  RESEND_OTP: "Didn't receive OTP? Resend",
+  NEW_PASSWORD: 'New Password',
+  CONFIRM_PASSWORD: 'Confirm Password',
+  RESET_PASSWORD: 'Reset Password',
 };
 
 

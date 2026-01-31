@@ -1,6 +1,9 @@
 import React, {useEffect, useState} from 'react';
 // import AsyncStorage from '@react-native-async-storage/async-storage';
 import DeliveryLoginScreen from '../screens/DeliveryLoginScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
+import OTPScreen from '../screens/OTPScreen';
+import ResetPasswordScreen from '../screens/ResetPasswordScreen';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import DeliveriesScreen from '../screens/DeliveriesScreen';
 import DeliveryStack from './DeliveryStack';
@@ -41,6 +44,9 @@ export default function AuthStack() {
         <Stack.Screen name="OnBoard" component={OnBoardingScreen} />
       )} */}
       <Stack.Screen name="Login" component={DeliveryLoginScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="OTP" component={OTPScreen} />
+      <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
       <Stack.Screen name="DeliveryStack" component={DeliveryStack} />
 
       {/* <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />

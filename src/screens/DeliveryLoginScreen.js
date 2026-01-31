@@ -209,10 +209,10 @@ const DeliveryLoginScreen = ({ navigation }) => {
     <View style={styles.container}>
       <Image source={require('../assets/login_logo.png')} style={styles.logo} />
 
-      <TouchableOpacity style={styles.portalBtn}>
+      {/* <TouchableOpacity style={styles.portalBtn}>
         <MaterialIcons name="delivery-dining" size={22} color={COLORS.WHITE} />
         <Text style={styles.portalText}>{STRINGS.DRIVER_PORTAL}</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
 
       <Text style={styles.title}>{STRINGS.DELIVERY_LOGIN}</Text>
       <Text style={styles.subTitle}>{STRINGS.ACCESS_TEXT}</Text>
@@ -260,6 +260,13 @@ const DeliveryLoginScreen = ({ navigation }) => {
           onPress={onLogin}
           disabled={loading}
         />
+
+        <TouchableOpacity
+          style={styles.forgotBtn}
+          onPress={() => navigation.navigate('ForgotPassword')}
+          disabled={loading}>
+          <Text style={styles.forgotText}>Forgot Password?</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -345,6 +352,18 @@ const styles = StyleSheet.create({
     color: COLORS.ERROR,
     fontSize: 12,
     marginTop: 4,
+    fontFamily: fontFamilyBody,
+  },
+  forgotBtn: {
+    alignSelf: 'center',
+    marginTop: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  forgotText: {
+    color: COLORS.PRIMARY,
+    fontSize: 14,
+    fontWeight: '600',
     fontFamily: fontFamilyBody,
   },
 });

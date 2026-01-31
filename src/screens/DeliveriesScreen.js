@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ScrollView,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import ActiveDeliveryCard from '../components/ActiveDeliveryCard';
 import DeliveriesHeader from '../components/DeliveriesHeader';
@@ -150,6 +151,8 @@ const DeliveriesScreen = ({ navigation }) => {
     [loadIdsFromStorage],
   );
 
+  const POLL_INTERVAL_MS = 15000; // 15 seconds
+
   useEffect(() => {
     let isMounted = true;
     const init = async () => {
@@ -167,6 +170,16 @@ const DeliveriesScreen = ({ navigation }) => {
       isMounted = false;
     };
   }, [fetchOrders, loadIdsFromStorage, markAllOrder]);
+
+  // Poll every 15 seconds only when screen is focused (silent, no loading/UI effect)
+  useFocusEffect(
+    useCallback(() => {
+      const id = setInterval(() => {
+        fetchOrders({ dIdNum: driverId, fIdClean: franchiseId });
+      }, POLL_INTERVAL_MS);
+      return () => clearInterval(id);
+    }, [fetchOrders, driverId, franchiseId]),
+  );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);

@@ -116,7 +116,7 @@ const DeliveriesHeader = ({ navigation, totaldeliveries }) => {
       <View style={styles.header}>
         <View style={styles.row}>
           <Image
-            source={require('../assets/coconut.png')}
+            source={require('../assets/login_logo.png')}
             style={styles.logo}
           />
 
@@ -196,10 +196,11 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    height: 40,
-    width: 40,
+    height: 80,
+    width: 80,
     borderRadius: 20,
-    backgroundColor: Colors.WHITE,
+    // backgroundColor: Colors.WHITE,
+    resizeMode: 'contain',
   },
 
   logout: {
