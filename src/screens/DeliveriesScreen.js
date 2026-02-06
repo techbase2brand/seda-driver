@@ -124,8 +124,8 @@ const DeliveriesScreen = ({ navigation }) => {
           .from('orders')
           .select('*')
           .eq('driver_id', did)
-          .gte('created_at', startOfDay.toISOString())
-          .lte('created_at', endOfDay.toISOString())
+          // .gte('created_at', startOfDay.toISOString())
+          // .lte('created_at', endOfDay.toISOString())
           .order('created_at', { ascending: false });
 
         if (fid) {
@@ -216,7 +216,7 @@ const DeliveriesScreen = ({ navigation }) => {
 
     return (
       <View style={styles.emptyWrap}>
-        <Text style={styles.emptyText}>Order not found</Text>
+        <Text style={styles.emptyText}>No orders assigned yet</Text>
       </View>
     );
   };

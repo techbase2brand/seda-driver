@@ -56,30 +56,35 @@ useEffect(() => {
     // requestLocationPermission();
   }, []);
   const requestNotificationPermission = async () => {
-    if (Platform.OS === 'android' && Platform.Version >= 33) {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-          {
-            title: 'Notification Permission',
-            message: 'This app would like to send you notifications.',
-            buttonPositive: 'Allow',
-            buttonNegative: 'Deny',
-          },
-        );
-
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          getFcmToken();
-          console.log('Notification permission granted');
-        } else {
-          console.log('Notification permission denied');
-          Alert.alert(
-            'Permission Denied',
-            'You will not receive notifications.',
+    if (Platform.OS === 'android') {
+      if (Platform.Version >= 33) {
+        try {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+            {
+              title: 'Notification Permission',
+              message: 'This app would like to send you notifications.',
+              buttonPositive: 'Allow',
+              buttonNegative: 'Deny',
+            },
           );
+
+          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            getFcmToken();
+            console.log('Notification permission granted');
+          } else {
+            console.log('Notification permission denied');
+            Alert.alert(
+              'Permission Denied',
+              'You will not receive notifications.',
+            );
+          }
+        } catch (err) {
+          console.warn('Permission error:', err);
         }
-      } catch (err) {
-        console.warn('Permission error:', err);
+      } else {
+        // Android < 33 - permissions granted by default, get token directly
+        getFcmToken();
       }
     }
   };

@@ -12,6 +12,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import messaging from '@react-native-firebase/messaging';
 
 import COLORS from '../constants/Color';
 import { STRINGS } from '../constants/Constants';
@@ -30,12 +31,27 @@ const DeliveryLoginScreen = ({ navigation }) => {
   useEffect(() => {
     const fetchFcmToken = async () => {
       try {
-        const token = await AsyncStorage.getItem('fcmToken');
+        // First try to get from storage
+        let token = await AsyncStorage.getItem('fcmToken');
+        
         if (token) {
           console.log('FCM token (from storage):', token);
           setFcmToken(token);
         } else {
-          console.log('No FCM token found in storage');
+          // If not in storage, try to get fresh token
+          console.log('No FCM token in storage, fetching fresh token...');
+          try {
+            token = await messaging().getToken();
+            if (token) {
+              console.log('FCM token (fresh):', token);
+              await AsyncStorage.setItem('fcmToken', token);
+              setFcmToken(token);
+            } else {
+              console.log('Failed to get FCM token');
+            }
+          } catch (messagingError) {
+            console.log('Error getting FCM token:', messagingError);
+          }
         }
       } catch (error) {
         console.log('Error fetching FCM token:', error);
@@ -157,7 +173,25 @@ const DeliveryLoginScreen = ({ navigation }) => {
         return;
       }
 
-      console.log('FCM TOKEN BEFORE LOGIN:', fcmToken);
+      // Get FCM token - try fresh if not available
+      let tokenToSend = fcmToken;
+      if (!tokenToSend) {
+        try {
+          tokenToSend = await AsyncStorage.getItem('fcmToken');
+          if (!tokenToSend) {
+            // Try to get fresh token
+            tokenToSend = await messaging().getToken();
+            if (tokenToSend) {
+              await AsyncStorage.setItem('fcmToken', tokenToSend);
+              setFcmToken(tokenToSend);
+            }
+          }
+        } catch (tokenError) {
+          console.log('Error getting FCM token during login:', tokenError);
+        }
+      }
+
+      console.log('FCM TOKEN BEFORE LOGIN:', tokenToSend);
       console.log('PLATFORM:', Platform.OS);
 
       //  AUTH LOGIN (IMPORTANT)
@@ -172,11 +206,11 @@ const DeliveryLoginScreen = ({ navigation }) => {
         return;
       }
 
-      //  UPDATE AFTER AUTH
+      //  UPDATE AFTER AUTH - send FCM token even if empty (server can handle it)
       const { data: updatedRow, error: updateError } = await supabase
         .from('drivers')
         .update({
-          fcm_token: fcmToken,
+          fcm_token: tokenToSend || null,
           fcm_deviceType: Platform.OS,
         })
         .eq('id', driver.id)
