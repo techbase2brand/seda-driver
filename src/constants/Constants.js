@@ -49,3 +49,5 @@ export const DELIVERY_SUMMARY = {
   inProgress: 1,
   delivered: 0,
 };
+
+export const GOOGLE_MAPS_APIKEY = 'AIzaSyBEQp-ZFMYZjsTNyximu2pAifQ9EWA4W3M';
