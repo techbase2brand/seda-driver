@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,12 +7,10 @@ import {
   Image,
   TouchableOpacity,
   Alert,
-  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import messaging from '@react-native-firebase/messaging';
 
 import COLORS from '../constants/Color';
 import { STRINGS } from '../constants/Constants';
@@ -26,40 +24,6 @@ const DeliveryLoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [fcmToken, setFcmToken] = useState('');
-
-  useEffect(() => {
-    const fetchFcmToken = async () => {
-      try {
-        // First try to get from storage
-        let token = await AsyncStorage.getItem('fcmToken');
-        
-        if (token) {
-          console.log('FCM token (from storage):', token);
-          setFcmToken(token);
-        } else {
-          // If not in storage, try to get fresh token
-          console.log('No FCM token in storage, fetching fresh token...');
-          try {
-            token = await messaging().getToken();
-            if (token) {
-              console.log('FCM token (fresh):', token);
-              await AsyncStorage.setItem('fcmToken', token);
-              setFcmToken(token);
-            } else {
-              console.log('Failed to get FCM token');
-            }
-          } catch (messagingError) {
-            console.log('Error getting FCM token:', messagingError);
-          }
-        }
-      } catch (error) {
-        console.log('Error fetching FCM token:', error);
-      }
-    };
-
-    fetchFcmToken();
-  }, []);
 
   const validate = () => {
     let newErrors = {};
@@ -78,79 +42,6 @@ const DeliveryLoginScreen = ({ navigation }) => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-  // const onLogin = async () => {
-  //   if (!validate()) return;
-
-  //   setLoading(true);
-  //   setErrors({});
-
-  //   try {
-  //     const cleanEmail = email.trim().toLowerCase();
-
-  //     /**
-  //      * 1️⃣ Driver table check
-  //      */
-  //     const { data: driver, error } = await supabase
-  //       .from('drivers')
-  //       .select('id,email,franchise_id,role,status')
-  //       .eq('email', cleanEmail)
-  //       .eq('role', 'Driver')
-  //       .single();
-
-  //     console.log('DRIVER CHECK:', driver, error);
-
-  //     if (error || !driver) {
-  //       setErrors({ email: 'Driver not found' });
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     /**
-  //      * 2️⃣ Supabase Auth login
-  //      */
-  //     const { data: authData, error: authError } =
-  //       await supabase.auth.signInWithPassword({
-  //         email: cleanEmail,
-  //         password: password,
-  //       });
-  //     // 3️⃣ Save FCM token & platform
-  //     await supabase
-  //       .from('drivers')
-  //       .update({
-  //         fcm_token: fcmToken,
-  //         platform: Platform.OS,
-  //       })
-  //       .eq('id', driver.id);
-  //     if (authError) {
-  //       setErrors({ password: authError.message });
-  //       setLoading(false);
-  //       return;
-  //     }
-
-  //     /**
-  //      * 3️⃣ Save token & driver data
-  //      */
-  //     await AsyncStorage.multiSet([
-  //       ['token', authData.session.access_token],
-  //       ['driver_id', String(driver.id)],
-  //       ['franchise_id', driver.franchise_id || ''],
-  //       ['driver_email', driver.email],
-  //     ]);
-
-  //     /**
-  //      * 4️⃣ Navigate
-  //      */
-  //     navigation.reset({
-  //       index: 0,
-  //       routes: [{ name: 'DeliveryStack' }],
-  //     });
-  //   } catch (e) {
-  //     console.log('LOGIN ERROR:', e);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const onLogin = async () => {
     if (!validate()) return;
 
@@ -173,27 +64,6 @@ const DeliveryLoginScreen = ({ navigation }) => {
         return;
       }
 
-      // Get FCM token - try fresh if not available
-      let tokenToSend = fcmToken;
-      if (!tokenToSend) {
-        try {
-          tokenToSend = await AsyncStorage.getItem('fcmToken');
-          if (!tokenToSend) {
-            // Try to get fresh token
-            tokenToSend = await messaging().getToken();
-            if (tokenToSend) {
-              await AsyncStorage.setItem('fcmToken', tokenToSend);
-              setFcmToken(tokenToSend);
-            }
-          }
-        } catch (tokenError) {
-          console.log('Error getting FCM token during login:', tokenError);
-        }
-      }
-
-      console.log('FCM TOKEN BEFORE LOGIN:', tokenToSend);
-      console.log('PLATFORM:', Platform.OS);
-
       //  AUTH LOGIN (IMPORTANT)
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
@@ -205,19 +75,6 @@ const DeliveryLoginScreen = ({ navigation }) => {
         setErrors({ password: authError.message });
         return;
       }
-
-      //  UPDATE AFTER AUTH - send FCM token even if empty (server can handle it)
-      const { data: updatedRow, error: updateError } = await supabase
-        .from('drivers')
-        .update({
-          fcm_token: tokenToSend || null,
-          fcm_deviceType: Platform.OS,
-        })
-        .eq('id', driver.id)
-        .select();
-
-      console.log('UPDATED DRIVER:', updatedRow);
-      console.log('UPDATE ERROR:', updateError);
 
       //  Local storage
       await AsyncStorage.multiSet([
