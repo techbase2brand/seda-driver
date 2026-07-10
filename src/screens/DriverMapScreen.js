@@ -324,6 +324,24 @@ function getFinalAddressString(addr) {
   return '';
 }
 
+async function requestIOSLocationPermission() {
+  if (Platform.OS !== 'ios') {
+    return true;
+  }
+
+  Geolocation.setRNConfiguration({
+    skipPermissionRequests: false,
+    authorizationLevel: 'always',
+  });
+
+  return new Promise(resolve => {
+    Geolocation.requestAuthorization(
+      () => resolve(true),
+      () => resolve(false),
+    );
+  });
+}
+
 async function requestAndroidLocationPermission() {
   if (Platform.OS !== 'android') {
     return true;
@@ -444,10 +462,15 @@ const DriverMapScreen = ({ navigation, route }) => {
     });
   }, []);
 
-  const handleBackgroundDisclosureChoice = useCallback(accepted => {
+  const handleBackgroundDisclosureContinue = useCallback(async () => {
+    let granted = true;
+    if (Platform.OS === 'ios') {
+      granted = await requestIOSLocationPermission();
+    }
+
     setShowBackgroundDisclosure(false);
     if (disclosureResolverRef.current) {
-      disclosureResolverRef.current(accepted);
+      disclosureResolverRef.current(granted);
       disclosureResolverRef.current = null;
     }
   }, []);
@@ -603,7 +626,7 @@ const DriverMapScreen = ({ navigation, route }) => {
       visible={showBackgroundDisclosure}
       transparent
       animationType="fade"
-      onRequestClose={() => handleBackgroundDisclosureChoice(false)}
+      onRequestClose={() => {}}
     >
       <View style={styles.disclosureBackdrop}>
         <View style={styles.disclosureCard}>
@@ -620,15 +643,9 @@ const DriverMapScreen = ({ navigation, route }) => {
 
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={() => handleBackgroundDisclosureChoice(true)}
+            onPress={handleBackgroundDisclosureContinue}
           >
-            <Text style={styles.retryButtonText}>Continue and allow</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => handleBackgroundDisclosureChoice(false)}
-          >
-            <Text style={styles.secondaryButtonText}>Not now</Text>
+            <Text style={styles.retryButtonText}>Continue</Text>
           </TouchableOpacity>
         </View>
       </View>

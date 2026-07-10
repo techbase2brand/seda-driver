@@ -34,7 +34,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access to take photos</string>
+	<string>Camera access is required to capture and upload proof of delivery photos for completed deliveries.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We need your location to show delivery directions</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

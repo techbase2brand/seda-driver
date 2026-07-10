@@ -7,6 +7,8 @@ import {
   Modal,
   ActivityIndicator,
   Platform,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Color from '../constants/Color';
@@ -21,7 +23,6 @@ const DriverProfileScreen = ({ navigation, route }) => {
 
   const totaldeliveries = route?.params?.totaldeliveries;
 
-  // ================= FETCH DRIVER (lightweight query, no blocking UI) =================
   const fetchDriverProfile = useCallback(async () => {
     try {
       const driverId = await AsyncStorage.getItem('driver_id');
@@ -29,7 +30,6 @@ const DriverProfileScreen = ({ navigation, route }) => {
         setLoading(false);
         return;
       }
-
       const { data, error } = await supabase
         .from('drivers')
         .select('id, driver_name, email, phone_number')
@@ -52,7 +52,6 @@ const DriverProfileScreen = ({ navigation, route }) => {
     fetchDriverProfile();
   }, [fetchDriverProfile]);
 
-  // ================= INITIALS =================
   const getInitials = name => {
     if (!name) return 'DR';
     return name
@@ -62,7 +61,6 @@ const DriverProfileScreen = ({ navigation, route }) => {
       .toUpperCase();
   };
 
-  // ================= LOGOUT =================
   const handleConfirmLogout = async () => {
     try {
       await AsyncStorage.multiRemove([
@@ -71,10 +69,8 @@ const DriverProfileScreen = ({ navigation, route }) => {
         'franchise_id',
         'driver_email',
       ]);
-
       await supabase.auth.signOut();
       setShowLogoutModal(false);
-
       navigation.reset({
         index: 0,
         routes: [{ name: 'AuthStack' }],
@@ -84,138 +80,163 @@ const DriverProfileScreen = ({ navigation, route }) => {
     }
   };
 
-  // Show profile layout immediately; only driver details show loading state (no blank screen)
   return (
-    <View style={styles.container}>
-      {/* Header - always visible */}
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" backgroundColor="#4FA3E3" />
+
+      {/* ── HEADER ── */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="chevron-back" size={26} color="#fff" />
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+          <Icon name="chevron-back" size={22} color="#fff" />
         </TouchableOpacity>
 
-        <View style={styles.avatarWrapper}>
-          <View style={styles.avatar}>
-            {loading ? (
-              <ActivityIndicator size="small" color="#4AA3DF" />
-            ) : (
-              <Text style={styles.avatarText}>
-                {getInitials(driver?.driver_name)}
-              </Text>
-            )}
-          </View>
-        </View>
+        <Text style={styles.headerTitle}>My Profile</Text>
 
-        <Text style={styles.name}>
-          {loading ? 'Loading...' : driver?.driver_name || 'Driver'}
-        </Text>
-
-        {/* <View style={styles.verified}>
-          <Icon name="checkmark-circle" size={14} color="#22C55E" />
-          <Text style={styles.verifiedText}> Verified Driver</Text>
-        </View> */}
+        {/* empty spacer to center the title */}
+        <View style={styles.backBtn} />
       </View>
 
-      {/* Stats - use route params (no fetch needed, already available) */}
-      <View style={styles.statsRow}>
-        <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: '#4AA3DF' }]}>
-            <Icon name="cube-outline" size={20} color="#fff" />
-          </View>
-          <Text style={styles.statValue}>
-            {totaldeliveries?.totalompleted ?? '-'}
-          </Text>
-          <Text style={styles.statLabel}>Total Deliveries</Text>
+      {/* ── HERO CARD ── */}
+      <View style={styles.heroCard}>
+        <View style={styles.avatarWrap}>
+          {loading ? (
+            <ActivityIndicator size="small" color="#1A6FE8" />
+          ) : (
+            <Text style={styles.avatarText}>
+              {getInitials(driver?.driver_name)}
+            </Text>
+          )}
+          <View style={styles.onlineDot} />
         </View>
 
-        <View style={styles.statCard}>
-          <View style={[styles.statIcon, { backgroundColor: '#22C55E' }]}>
-            <Icon name="trending-up" size={20} color="#fff" />
-          </View>
-          <Text style={styles.statValue}>
-            {totaldeliveries?.todaycompleted ?? '-'}
+        <View style={styles.heroInfo}>
+          <Text style={styles.heroName}>
+            {loading ? 'Loading...' : driver?.driver_name || 'Driver'}
           </Text>
-          <Text style={styles.statLabel}>Today</Text>
+          <View style={styles.heroSubRow}>
+            {/* <Icon name="location-outline" size={13} color="#9CA3AF" /> */}
+            {/* <Text style={styles.heroSub}>Mumbai</Text>
+            <Text style={styles.heroDot}>·</Text> */}
+            <View style={styles.activePill}>
+              <View style={styles.activeDotSmall} />
+              <Text style={styles.activePillText}>Active</Text>
+            </View>
+          </View>
         </View>
       </View>
 
-      {/* Driver Info - show placeholders while loading */}
-      <View style={styles.infoCard}>
-        <View style={styles.infoHeader}>
-          <Icon name="person-outline" size={18} color="#4AA3DF" />
-          <Text style={styles.infoTitle}> Driver Information</Text>
-          {loading && (
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── STATS ── */}
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <View style={[styles.statIconBox, { backgroundColor: '#EBF2FF' }]}>
+              <Icon name="cube-outline" size={20} color="#1A6FE8" />
+            </View>
+            <Text style={styles.statNum}>
+              {totaldeliveries?.totalompleted ?? '-'}
+            </Text>
+            <Text style={styles.statLbl}>Total deliveries</Text>
+            {/* <View style={styles.trendBadge}>
+              <Icon name="trending-up" size={11} color="#1A6FE8" />
+              <Text style={styles.trendText}>+12%</Text>
+            </View> */}
+          </View>
+
+          <View style={styles.statCard}>
+            <View style={[styles.statIconBox, { backgroundColor: '#E8F8EF' }]}>
+              <Icon name="time-outline" size={20} color="#16A34A" />
+            </View>
+            <Text style={styles.statNum}>
+              {totaldeliveries?.todaycompleted ?? '-'}
+            </Text>
+            <Text style={styles.statLbl}>Completed today</Text>
+            {/* <View style={[styles.trendBadge, { backgroundColor: '#E8F8EF' }]}>
+              <Text style={[styles.trendText, { color: '#16A34A' }]}>Today</Text>
+            </View> */}
+          </View>
+        </View>
+
+        {/* ── DRIVER INFO ── */}
+        <View style={styles.sectionLabel}>
+          <Text style={styles.sectionLabelText}>Driver information</Text>
+        </View>
+
+        <View style={styles.card}>
+          {loading ? (
             <ActivityIndicator
               size="small"
-              color="#4AA3DF"
-              style={styles.infoLoader}
+              color="#1A6FE8"
+              style={{ paddingVertical: 20 }}
             />
+          ) : (
+            <>
+              <InfoRow
+                icon="person-outline"
+                label="Full name"
+                value={driver?.driver_name || '-'}
+              />
+              <View style={styles.divider} />
+              <InfoRow
+                icon="mail-outline"
+                label="Email address"
+                value={driver?.email || '-'}
+              />
+              <View style={styles.divider} />
+              <InfoRow
+                icon="call-outline"
+                label="Phone number"
+                value={driver?.phone_number || '-'}
+                isLast
+              />
+            </>
           )}
         </View>
 
-        <View style={styles.infoRow}>
-          <Icon name="person-outline" size={18} color="#6B7280" />
-          <View style={styles.infoText}>
-            <Text style={styles.infoLabel}>Full Name</Text>
-            <Text style={styles.infoValue}>
-              {loading ? '...' : driver?.driver_name || '-'}
-            </Text>
-          </View>
+        {/* ── MENU ── */}
+        <View style={styles.sectionLabel}>
+          <Text style={styles.sectionLabelText}>More</Text>
         </View>
 
-        <View style={styles.infoRow}>
-          <Icon name="mail-outline" size={18} color="#6B7280" />
-          <View style={styles.infoText}>
-            <Text style={styles.infoLabel}>Email Address</Text>
-            <Text style={styles.infoValue}>
-              {loading ? '...' : driver?.email || '-'}
-            </Text>
-          </View>
+        <View style={styles.card}>
+          <MenuRow
+            icon="document-text-outline"
+            iconColor="#1A6FE8"
+            iconBg="#EBF2FF"
+            label="Terms and conditions"
+            onPress={() => navigation.navigate('TermsAndConditionsScreen')}
+          />
+          <View style={styles.divider} />
+          <MenuRow
+            icon="shield-checkmark-outline"
+            iconColor="#1A6FE8"
+            iconBg="#EBF2FF"
+            label="Privacy policy"
+            onPress={() => navigation.navigate('PrivacyPolicyScreen')}
+            isLast
+          />
         </View>
 
-        <View style={styles.infoRow}>
-          <Icon name="call-outline" size={18} color="#6B7280" />
-          <View style={styles.infoText}>
-            <Text style={styles.infoLabel}>Phone Number</Text>
-            <Text style={styles.infoValue}>
-              {loading ? '...' : driver?.phone_number || '-'}
-            </Text>
-          </View>
-        </View>
-      </View>
-
-      {/* Terms & Privacy - side by side */}
-      <View style={styles.legalRow}>
+        {/* ── LOGOUT ── */}
         <TouchableOpacity
-          style={styles.legalBtn}
-          onPress={() => navigation.navigate('TermsAndConditionsScreen')}
+          style={styles.logoutBtn}
+          onPress={() => setShowLogoutModal(true)}
+          activeOpacity={0.8}
         >
-          <Icon name="document-text-outline" size={18} color="#4AA3DF" />
-          <Text style={styles.legalBtnText}>Terms & Conditions</Text>
+          <View style={styles.logoutIconBox}>
+            <Icon name="log-out-outline" size={18} color="#EF4444" />
+          </View>
+          <Text style={styles.logoutText}>Logout</Text>
+          <Icon name="chevron-forward" size={16} color="#EF4444" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.legalBtn}
-          onPress={() => navigation.navigate('PrivacyPolicyScreen')}
-        >
-          <Icon name="shield-checkmark-outline" size={18} color="#4AA3DF" />
-          <Text style={styles.legalBtnText}>Privacy Policy</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* Logout */}
-      <TouchableOpacity
-        style={styles.logoutBtn}
-        onPress={() => setShowLogoutModal(true)}
-      >
-        <Icon name="log-out-outline" size={18} color="#EF4444" />
-        <Text style={styles.logoutText}> Logout</Text>
-      </TouchableOpacity>
+        <Text style={styles.version}>CoconutStock Driver App v1.0.0</Text>
+      </ScrollView>
 
-      <Text style={styles.version}>CoconutStock Driver App v1.0.0</Text>
-
-      {/* LOGOUT MODAL */}
+      {/* ── LOGOUT MODAL ── */}
       <Modal
         visible={showLogoutModal}
         transparent
@@ -224,14 +245,13 @@ const DriverProfileScreen = ({ navigation, route }) => {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
-            <Icon name="log-out-outline" size={42} color={Color.PRIMARY} />
-
-            <Text style={styles.modalTitle}>Confirm Logout</Text>
-
+            <View style={styles.modalIconWrap}>
+              <Icon name="log-out-outline" size={30} color="#EF4444" />
+            </View>
+            <Text style={styles.modalTitle}>Confirm logout</Text>
             <Text style={styles.modalText}>
               Are you sure you want to logout from your account?
             </Text>
-
             <View style={styles.modalActions}>
               <TouchableOpacity
                 style={styles.cancelBtn}
@@ -239,12 +259,11 @@ const DriverProfileScreen = ({ navigation, route }) => {
               >
                 <Text style={styles.cancelText}>Cancel</Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.confirmBtn}
                 onPress={handleConfirmLogout}
               >
-                <Text style={styles.confirmText}>Yes, Logout</Text>
+                <Text style={styles.confirmText}>Yes, logout</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -254,283 +273,412 @@ const DriverProfileScreen = ({ navigation, route }) => {
   );
 };
 
+/* ── Sub-components ── */
+
+const InfoRow = ({ icon, label, value, isLast }) => (
+  <View style={[styles.infoRow, isLast && { marginBottom: 0 }]}>
+    <View style={styles.infoIconBox}>
+      <Icon name={icon} size={17} color="#1A6FE8" />
+    </View>
+    <View style={styles.infoText}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
+    </View>
+  </View>
+);
+
+const MenuRow = ({ icon, iconColor, iconBg, label, onPress, isLast }) => (
+  <TouchableOpacity
+    style={[styles.menuRow, isLast && { marginBottom: 0 }]}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={[styles.infoIconBox, { backgroundColor: iconBg }]}>
+      <Icon name={icon} size={17} color={iconColor} />
+    </View>
+    <Text style={styles.menuLabel}>{label}</Text>
+    <Icon name="chevron-forward" size={16} color="#C4C9D4" />
+  </TouchableOpacity>
+);
+
 export default DriverProfileScreen;
+
+/* ── Styles ── */
+const BLUE = '#1A6FE8';
+const BLUE_LIGHT = '#EBF2FF';
+
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F2F5FA',
   },
 
+  /* header */
   header: {
     backgroundColor: '#4FA3E3',
-    paddingTop: Platform.OS === 'ios' ? 45 : 10,
-    paddingBottom: 90,
+    paddingTop: Platform.OS === 'ios' ? 54 : 16,
+    paddingBottom: 80,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
-
   backBtn: {
-    position: 'absolute',
-    left: 16,
-    top: Platform.OS === 'ios' ? 60 : 30,
-  },
-
-  avatarWrapper: {
-    marginTop: 10,
-  },
-
-  avatar: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: '#fff',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.18)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  avatarText: {
-    fontSize: 28,
-    fontWeight: '600',
-    color: '#4AA3DF',
-    fontFamily: fontFamilyHeading,
-  },
-
-  cameraIcon: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#fff',
-    padding: 6,
-    borderRadius: 20,
-  },
-
-  name: {
-    marginTop: 10,
+  headerTitle: {
+    fontSize: 17,
+    fontWeight: '700',
     color: '#fff',
-    fontSize: 18,
-    fontWeight: '600',
     fontFamily: fontFamilyHeading,
+    letterSpacing: 0.2,
   },
 
-  verified: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginTop: 6,
-  },
-
-  verifiedText: {
-    color: '#fff',
-    fontSize: 12,
-    fontFamily: fontFamilyBody,
-  },
-
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    marginTop: -55,
-  },
-
-  statCard: {
-    width: '48%',
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    alignItems: 'center',
-    elevation: 4,
-  },
-
-  statIcon: {
-    backgroundColor: '#E0F2FE',
-    padding: 10,
-    borderRadius: 12,
-    marginBottom: 6,
-  },
-
-  statValue: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#1F2937',
-    fontFamily: fontFamilyHeading,
-  },
-
-  statLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontFamily: fontFamilyBody,
-  },
-
-  infoCard: {
+  /* hero card */
+  heroCard: {
     backgroundColor: '#fff',
     marginHorizontal: 16,
-    marginVertical: 20,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 30,
-  },
-
-  infoHeader: {
+    marginTop: -60,
+    borderRadius: 20,
+    paddingVertical: 20,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: 16,
+    elevation: 6,
+    shadowColor: '#1A6FE8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
-
-  infoLoader: {
-    marginLeft: 8,
+  avatarWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: BLUE_LIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    flexShrink: 0,
   },
-
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1F2937',
+  avatarText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: BLUE,
     fontFamily: fontFamilyHeading,
   },
+  onlineDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#22C55E',
+    borderWidth: 2.5,
+    borderColor: '#fff',
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+  },
+  heroInfo: {
+    flex: 1,
+  },
+  heroName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    fontFamily: fontFamilyHeading,
+    letterSpacing: -0.3,
+  },
+  heroSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+    gap: 4,
+  },
+  heroSub: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontFamily: fontFamilyBody,
+  },
+  heroDot: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontFamily: fontFamilyBody,
+  },
+  activePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F8EF',
+    borderRadius: 20,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+    gap: 4,
+  },
+  activeDotSmall: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#22C55E',
+  },
+  activePillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#16A34A',
+    fontFamily: fontFamilyBody,
+  },
 
+  /* scroll */
+  scroll: { flex: 1 },
+  scrollContent: { paddingBottom: 30 },
+
+  /* stats */
+  statsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    gap: 12,
+    marginTop: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    padding: 16,
+    alignItems: 'flex-start',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+  },
+  statIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 10,
+  },
+  statNum: {
+    fontSize: 26,
+    fontWeight: '700',
+    color: '#111827',
+    fontFamily: fontFamilyHeading,
+    letterSpacing: -1,
+  },
+  statLbl: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontFamily: fontFamilyBody,
+    marginTop: 2,
+  },
+  trendBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: BLUE_LIGHT,
+    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    marginTop: 8,
+    gap: 3,
+  },
+  trendText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: BLUE,
+    fontFamily: fontFamilyBody,
+  },
+
+  /* section label */
+  sectionLabel: {
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 8,
+  },
+  sectionLabelText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9CA3AF',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    fontFamily: fontFamilyBody,
+  },
+
+  /* card */
+  card: {
+    backgroundColor: '#fff',
+    marginHorizontal: 16,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 4,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+  },
+  divider: {
+    height: 0.5,
+    backgroundColor: '#F3F4F6',
+    marginLeft: 52,
+  },
+
+  /* info row */
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 22,
+    paddingVertical: 14,
+    gap: 14,
   },
-
-  infoText: {
-    marginLeft: 12,
+  infoIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: BLUE_LIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-
+  infoText: { flex: 1 },
   infoLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontFamily: fontFamilyBody,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontWeight: '500',
+    marginTop: 2,
     fontFamily: fontFamilyBody,
   },
 
-  infoValue: {
+  /* menu row */
+  menuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    gap: 14,
+  },
+  menuLabel: {
+    flex: 1,
     fontSize: 14,
-    color: '#1F2937',
+    color: '#111827',
     fontWeight: '500',
     fontFamily: fontFamilyBody,
   },
 
-  legalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    gap: 12,
-  },
-
-  legalBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    gap: 6,
-  },
-
-  legalBtnText: {
-    fontSize: 12,
-    color: '#1F2937',
-    fontWeight: '600',
-    fontFamily: fontFamilyBody,
-  },
-
+  /* logout */
   logoutBtn: {
-    borderWidth: 1,
-    borderColor: '#EF4444',
-    marginHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: 'center',
     flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF5F5',
+    marginHorizontal: 16,
+    marginTop: 20,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
+    gap: 14,
+    borderWidth: 0.5,
+    borderColor: '#FCA5A5',
+  },
+  logoutIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 11,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
     justifyContent: 'center',
   },
-
   logoutText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
     color: '#EF4444',
-    fontWeight: '600',
     fontFamily: fontFamilyBody,
   },
 
+  /* version */
   version: {
     textAlign: 'center',
-    marginTop: 14,
-    fontSize: 12,
-    color: '#9CA3AF',
+    marginTop: 20,
+    fontSize: 11,
+    color: '#C4C9D4',
     fontFamily: fontFamilyBody,
   },
-  /* ===== MODAL ===== */
 
+  /* modal */
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
   },
-
   modalBox: {
-    backgroundColor: Color.WHITE,
+    backgroundColor: '#fff',
     width: '85%',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 20,
+    padding: 24,
     alignItems: 'center',
   },
-
+  modalIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: 18,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 14,
+  },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginTop: 10,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#111827',
     fontFamily: fontFamilyHeading,
   },
-
   modalText: {
     textAlign: 'center',
     fontSize: 13,
-    color: Color.grayText,
-    marginVertical: 12,
+    color: '#6B7280',
+    marginTop: 8,
+    marginBottom: 20,
+    lineHeight: 20,
     fontFamily: fontFamilyBody,
   },
-
   modalActions: {
     flexDirection: 'row',
+    gap: 10,
     width: '100%',
-    marginTop: 10,
   },
-
   cancelBtn: {
     flex: 1,
     borderWidth: 1,
-    borderColor: Color.BORDER,
-    padding: 12,
-    borderRadius: 10,
-    marginRight: 8,
+    borderColor: '#E5E7EB',
+    paddingVertical: 13,
+    borderRadius: 12,
     alignItems: 'center',
   },
-
-  confirmBtn: {
-    flex: 1,
-    backgroundColor: Color.PRIMARY,
-    padding: 12,
-    borderRadius: 10,
-    marginLeft: 8,
-    alignItems: 'center',
-  },
-
   cancelText: {
-    color: Color.grayText,
-    fontWeight: '500',
+    color: '#6B7280',
+    fontWeight: '600',
+    fontSize: 14,
     fontFamily: fontFamilyBody,
   },
-
+  confirmBtn: {
+    flex: 1,
+    backgroundColor: '#EF4444',
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
   confirmText: {
-    color: Color.WHITE,
-    fontWeight: '600',
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
     fontFamily: fontFamilyBody,
   },
 });
+
+
