@@ -11,6 +11,9 @@ import UpdateStatusScreen from '../screens/UpdateStatusScreen';
 import UnableToDeliverScreen from '../screens/UnableToDeliverScreen';
 import DriverMapScreen from '../screens/DriverMapScreen';
 import DriverProfileScreen from '../screens/DriverProfileScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import ChangePasswordOTPScreen from '../screens/ChangePasswordOTPScreen';
+import ChangePasswordResetScreen from '../screens/ChangePasswordResetScreen';
 import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 
@@ -59,6 +62,9 @@ export default function DeliveryStack() {
       <Stack.Screen name="UnableToDeliverScreen" component={UnableToDeliverScreen} />
       <Stack.Screen name="DriverMapScreen" component={DriverMapScreen} />
       <Stack.Screen name="DriverProfileScreen" component={DriverProfileScreen} />
+      <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <Stack.Screen name="ChangePasswordOTP" component={ChangePasswordOTPScreen} />
+      <Stack.Screen name="ChangePasswordReset" component={ChangePasswordResetScreen} />
       <Stack.Screen name="TermsAndConditionsScreen" component={TermsAndConditionsScreen} />
       <Stack.Screen name="PrivacyPolicyScreen" component={PrivacyPolicyScreen} />
 

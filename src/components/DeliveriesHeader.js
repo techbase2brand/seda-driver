@@ -185,8 +185,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
     paddingTop:
-    Platform.OS === 'ios' ? widthPercentageToDP(10) : widthPercentageToDP(4),
-    paddingBottom: 65,
+      Platform.OS === 'ios' ? widthPercentageToDP(10) : widthPercentageToDP(4),
+    paddingBottom: Platform.OS === 'ios' ? 25 : 25,
   },
 
   row: {

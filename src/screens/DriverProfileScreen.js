@@ -203,6 +203,14 @@ const DriverProfileScreen = ({ navigation, route }) => {
 
         <View style={styles.card}>
           <MenuRow
+            icon="lock-closed-outline"
+            iconColor="#1A6FE8"
+            iconBg="#EBF2FF"
+            label="Change password"
+            onPress={() => navigation.navigate('ChangePassword')}
+          />
+          <View style={styles.divider} />
+          <MenuRow
             icon="document-text-outline"
             iconColor="#1A6FE8"
             iconBg="#EBF2FF"
@@ -680,5 +688,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilyBody,
   },
 });
+
 
 
