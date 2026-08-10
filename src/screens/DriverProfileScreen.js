@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
+  TextInput,
   StyleSheet,
   TouchableOpacity,
   Modal,
@@ -9,6 +10,8 @@ import {
   Platform,
   ScrollView,
   StatusBar,
+  KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import Color from '../constants/Color';
@@ -18,8 +21,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const DriverProfileScreen = ({ navigation, route }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [driver, setDriver] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editErrors, setEditErrors] = useState({ name: '', phone: '' });
+  const [saving, setSaving] = useState(false);
 
   const totaldeliveries = route?.params?.totaldeliveries;
 
@@ -51,6 +59,59 @@ const DriverProfileScreen = ({ navigation, route }) => {
   useEffect(() => {
     fetchDriverProfile();
   }, [fetchDriverProfile]);
+
+  const openEditModal = () => {
+    setEditName(driver?.driver_name || '');
+    setEditPhone(driver?.phone_number || '');
+    setEditErrors({ name: '', phone: '' });
+    setShowEditModal(true);
+  };
+
+  const validateEdit = () => {
+    const err = { name: '', phone: '' };
+    const trimmedName = editName.trim();
+    const trimmedPhone = editPhone.trim();
+
+    if (!trimmedName) err.name = 'Full name is required';
+    if (!trimmedPhone) err.phone = 'Phone number is required';
+    else if (!/^\+?[\d\s-]{7,15}$/.test(trimmedPhone)) {
+      err.phone = 'Please enter a valid phone number';
+    }
+
+    setEditErrors(err);
+    return !err.name && !err.phone;
+  };
+
+  const handleSaveProfile = async () => {
+    if (!validateEdit() || !driver?.id) return;
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from('drivers')
+        .update({
+          driver_name: editName.trim(),
+          phone_number: editPhone.trim(),
+        })
+        .eq('id', driver.id);
+
+      if (error) {
+        Alert.alert('Error', error.message || 'Failed to update profile.');
+        return;
+      }
+
+      setDriver(prev => ({
+        ...prev,
+        driver_name: editName.trim(),
+        phone_number: editPhone.trim(),
+      }));
+      setShowEditModal(false);
+      Alert.alert('Success', 'Profile updated successfully.');
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Something went wrong.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const getInitials = name => {
     if (!name) return 'DR';
@@ -203,6 +264,14 @@ const DriverProfileScreen = ({ navigation, route }) => {
 
         <View style={styles.card}>
           <MenuRow
+            icon="create-outline"
+            iconColor="#1A6FE8"
+            iconBg="#EBF2FF"
+            label="Edit profile"
+            onPress={openEditModal}
+          />
+          <View style={styles.divider} />
+          <MenuRow
             icon="lock-closed-outline"
             iconColor="#1A6FE8"
             iconBg="#EBF2FF"
@@ -243,6 +312,95 @@ const DriverProfileScreen = ({ navigation, route }) => {
 
         <Text style={styles.version}>CoconutStock Driver App v1.0.0</Text>
       </ScrollView>
+
+      {/* ── EDIT PROFILE MODAL ── */}
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.editModalBox}>
+            <View style={styles.editModalHeader}>
+              <Text style={styles.modalTitle}>Edit profile</Text>
+              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                <Icon name="close" size={22} color="#6B7280" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.editLabel}>Full name</Text>
+            <TextInput
+              value={editName}
+              onChangeText={t => {
+                setEditName(t);
+                if (editErrors.name) setEditErrors(e => ({ ...e, name: '' }));
+              }}
+              placeholder="Enter full name"
+              placeholderTextColor="#9CA3AF"
+              style={[
+                styles.editInput,
+                editErrors.name ? styles.editInputError : null,
+              ]}
+              autoCapitalize="words"
+            />
+            {editErrors.name ? (
+              <Text style={styles.editError}>{editErrors.name}</Text>
+            ) : null}
+
+            <Text style={styles.editLabel}>Email address</Text>
+            <TextInput
+              value={driver?.email || ''}
+              editable={false}
+              style={[styles.editInput, styles.editInputDisabled]}
+            />
+            <Text style={styles.editHint}>Email cannot be edited</Text>
+
+            <Text style={styles.editLabel}>Phone number</Text>
+            <TextInput
+              value={editPhone}
+              onChangeText={t => {
+                setEditPhone(t);
+                if (editErrors.phone) setEditErrors(e => ({ ...e, phone: '' }));
+              }}
+              placeholder="Enter phone number"
+              placeholderTextColor="#9CA3AF"
+              keyboardType="phone-pad"
+              style={[
+                styles.editInput,
+                editErrors.phone ? styles.editInputError : null,
+              ]}
+            />
+            {editErrors.phone ? (
+              <Text style={styles.editError}>{editErrors.phone}</Text>
+            ) : null}
+
+            <View style={[styles.modalActions, { marginTop: 20 }]}>
+              <TouchableOpacity
+                style={styles.cancelBtn}
+                onPress={() => setShowEditModal(false)}
+                disabled={saving}
+              >
+                <Text style={styles.cancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && { opacity: 0.7 }]}
+                onPress={handleSaveProfile}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.confirmText}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* ── LOGOUT MODAL ── */}
       <Modal
@@ -687,7 +845,67 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: fontFamilyBody,
   },
+
+  /* edit profile modal */
+  editModalBox: {
+    backgroundColor: '#fff',
+    width: '90%',
+    borderRadius: 20,
+    padding: 20,
+  },
+  editModalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  editLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
+    marginTop: 10,
+    fontFamily: fontFamilyBody,
+  },
+  editInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 14,
+    color: '#111827',
+    fontFamily: fontFamilyBody,
+  },
+  editInputError: {
+    borderColor: '#EF4444',
+  },
+  editInputDisabled: {
+    backgroundColor: '#F3F4F6',
+    color: '#6B7280',
+  },
+  editHint: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 4,
+    fontFamily: fontFamilyBody,
+  },
+  editError: {
+    fontSize: 12,
+    color: '#EF4444',
+    marginTop: 4,
+    fontFamily: fontFamilyBody,
+  },
+  saveBtn: {
+    flex: 1,
+    backgroundColor: '#1A6FE8',
+    paddingVertical: 13,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
+
 
 
 

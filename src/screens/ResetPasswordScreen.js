@@ -53,6 +53,10 @@ const ResetPasswordScreen = ({ navigation }) => {
         setLoading(false);
         return;
       }
+      await AsyncStorage.multiRemove([
+        'saved_login_email',
+        'saved_login_password',
+      ]);
       navigation.replace('Login');
     } catch (err) {
       setErrors(e => ({ ...e, new: err.message || 'Something went wrong.' }));

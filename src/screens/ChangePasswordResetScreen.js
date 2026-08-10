@@ -50,6 +50,8 @@ const ChangePasswordResetScreen = ({ navigation }) => {
       'franchise_id',
       'driver_email',
       'change_password_email',
+      'saved_login_email',
+      'saved_login_password',
     ]);
     await supabase.auth.signOut();
     navigation.reset({

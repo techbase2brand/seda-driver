@@ -184,9 +184,8 @@ const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
-    paddingTop:
-      Platform.OS === 'ios' ? widthPercentageToDP(10) : widthPercentageToDP(4),
-    paddingBottom: Platform.OS === 'ios' ? 25 : 25,
+    paddingTop:Platform.OS === 'ios' ? widthPercentageToDP(10) : widthPercentageToDP(4),
+    paddingBottom: Platform.OS === 'ios' ? 90 : 60,
   },
 
   row: {

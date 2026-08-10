@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,19 @@ const DeliveryLoginScreen = ({ navigation }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const savedEmail = await AsyncStorage.getItem('saved_login_email');
+        const savedPassword = await AsyncStorage.getItem('saved_login_password');
+        if (savedEmail) setEmail(savedEmail);
+        if (savedPassword) setPassword(savedPassword);
+      } catch (err) {
+        console.log('Failed to load saved login:', err);
+      }
+    })();
+  }, []);
 
   const validate = () => {
     let newErrors = {};
@@ -82,6 +95,8 @@ const DeliveryLoginScreen = ({ navigation }) => {
         ['driver_id', String(driver.id)],
         ['franchise_id', driver.franchise_id || ''],
         ['driver_email', driver.email],
+        ['saved_login_email', cleanEmail],
+        ['saved_login_password', password],
       ]);
 
       //  Navigate
