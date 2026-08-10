@@ -9,6 +9,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
+import { formatOrderName } from '../utils';
 
 const HeaderBar = ({ navigation, orderName, orderStop }) => {
   return (
@@ -23,7 +24,7 @@ const HeaderBar = ({ navigation, orderName, orderStop }) => {
         </TouchableOpacity>
         <View>
           <Text style={styles.title}>Delivery Details</Text>
-          <Text style={styles.sub}>{orderName}</Text>
+          <Text style={styles.sub}>{formatOrderName(orderName)}</Text>
         </View>
       </View>
 

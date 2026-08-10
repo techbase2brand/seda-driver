@@ -182,7 +182,14 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
         {!isDelivered && (
           <>
             <InfoCard title="Delivery Instructions">
-              <InstructionCard />
+              <InstructionCard
+                text={
+                  order?.special_instructions ||
+                  order?.order_notes ||
+                  order?.orderNotes ||
+                  ''
+                }
+              />
             </InfoCard>
 
             <ActionButton

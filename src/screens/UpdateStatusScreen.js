@@ -16,6 +16,7 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import COLORS from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
+import { formatOrderName } from '../utils';
 
 export default function UpdateStatusScreen({ navigation, route }) {
   const [recipient, setRecipient] = useState('');
@@ -215,7 +216,7 @@ export default function UpdateStatusScreen({ navigation, route }) {
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Update Status</Text>
-            <Text style={styles.headerSub}>{order?.order_name}</Text>
+            <Text style={styles.headerSub}>{formatOrderName(order?.order_name)}</Text>
           </View>
         </View>
 

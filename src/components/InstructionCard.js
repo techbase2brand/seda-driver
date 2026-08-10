@@ -4,12 +4,12 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 import { fontFamilyBody } from '../constants/Fonts';
 
-const InstructionCard = () => {
+const InstructionCard = ({ text }) => {
   return (
     <View style={styles.card}>
       <Icon name="chatbubble-outline" size={18} color={Colors.PRIMARY} />
       <Text style={styles.text}>
-        Please call before arrival. Deliver to back entrance.
+        {text?.trim() ? text.trim() : 'No delivery instructions provided.'}
       </Text>
     </View>
   );

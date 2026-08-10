@@ -4,7 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import GradientButton from './GradientButton';
-import { widthPercentageToDP } from '../utils';
+import { widthPercentageToDP, formatOrderName } from '../utils';
 import LinearGradient from 'react-native-linear-gradient';
 
 const ActiveDeliveryCard = ({ item, navigation }) => {
@@ -30,6 +30,34 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       ? deliveryAddresses[0]
       : deliveryAddresses.find(addr => addr?.isSelected === true);
 
+  const status = (item?.deliveryStatus || '').toLowerCase().trim();
+
+  const toTitleCase = text =>
+    String(text)
+      .toLowerCase()
+      .split(' ')
+      .filter(Boolean)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
+  const statusLabel =
+    status === 'unable to deliver'
+      ? 'Undelivered'
+      : status === 'driver assigned'
+      ? 'Assigned'
+      : status
+      ? toTitleCase(status)
+      : '-';
+
+  const statusBg =
+    status === 'completed'
+      ? '#65c391ff'
+      : status === 'unable to deliver'
+      ? '#FF3B30'
+      : status === 'in transit'
+      ? '#3655f2e8'
+      : '#0A4DFF'; // driver assigned / others
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -51,7 +79,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
             </LinearGradient>
           )}
           <Text style={styles.order} ellipsizeMode="tail">
-            {item.order_name}
+            {formatOrderName(item.order_name)}
           </Text>
         </View>
         <View>
@@ -72,54 +100,18 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
           <Icon name="business-outline" size={18} />
           <Text style={styles.text}>{companyDetail?.company_name}</Text>
         </View>
-        {/* <View
-          style={[
-            {
-              width: widthPercentageToDP(23),
-              borderRadius: 10,
-              paddingVertical: 5,
-              backgroundColor:
-                item?.deliveryStatus == 'completed'
-                  ? '#65c391ff'
-                  : item?.deliveryStatus == 'cancelled'
-                  ? '#FF3B30'
-                  : '#3655f2e8',
-              alignItems: 'center',
-              justifyContent: 'center',
-            },
-          ]}
-        >
-          
-          <Text
-            style={[{ color: '#fff', textAlign: 'center', fontWeight: '700' }]}
-          >
-            {item?.deliveryStatus == 'cancelled' ? "undelivered":item?.deliveryStatus}
-          </Text>
-        </View> */}
-        {(item?.deliveryStatus === 'completed' ||
-          item?.deliveryStatus === 'unable to deliver' ||
-          item?.deliveryStatus === 'in transit') && (
+        {!!item?.deliveryStatus && (
           <View
             style={{
               width: widthPercentageToDP(23),
               borderRadius: 10,
               paddingVertical: 5,
-              backgroundColor:
-                item?.deliveryStatus == 'completed'
-                  ? '#65c391ff'
-                  : item?.deliveryStatus == 'unable to deliver'
-                  ? '#FF3B30'
-                  : '#3655f2e8',
-              // item?.deliveryStatus === 'completed' ? '#65c391ff' : '#FF3B30',
+              backgroundColor: statusBg,
               alignItems: 'center',
               justifyContent: 'center',
             }}
           >
-            <Text style={[styles.statusBadgeText]}>
-              {item?.deliveryStatus == 'unable to deliver'
-                ? 'undelivered'
-                : item?.deliveryStatus}
-            </Text>
+            <Text style={[styles.statusBadgeText]}>{statusLabel}</Text>
           </View>
         )}
       </View>

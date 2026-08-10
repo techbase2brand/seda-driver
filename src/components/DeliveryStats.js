@@ -32,22 +32,29 @@ const StatCard = ({ icon, value, label, bg, gradient }) => (
 );
 
 const DeliveryStats = ({ orders }) => {
+  const normalize = status => (status || '').toLowerCase().trim();
+
   const completedOrdersCount = orders?.filter(
-    item => item?.deliveryStatus == 'completed',
+    item => normalize(item?.deliveryStatus) === 'completed',
   )?.length;
   const inProgressCount = orders?.filter(
-    item => item?.deliveryStatus == 'in transit',
+    item => normalize(item?.deliveryStatus) === 'in transit',
   )?.length;
-  const inAssignedCount = orders?.filter(
-    item => item?.deliveryStatus == 'driver assigned',
-  )?.length;
+  const inAssignedCount = orders?.filter(item => {
+    const status = normalize(item?.deliveryStatus);
+    return (
+      status !== 'completed' &&
+      status !== 'unable to deliver' &&
+      status !== 'in transit'
+    );
+  })?.length;
 
   return (
     <View style={styles.row}>
       <StatCard
         icon="cube-outline"
         value={inAssignedCount}
-        label="Assigned"
+        label="Total Orders"
         bg="#0A4DFF"
         gradient={['#0a24a7ff', '#305FFD']}
       />

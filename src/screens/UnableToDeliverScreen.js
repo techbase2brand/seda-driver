@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
+import { formatOrderName } from '../utils';
 
 const COLORS = {
   RED: '#FF0033',
@@ -82,7 +83,7 @@ export default function UnableToDeliverScreen({ navigation, route }) {
           </TouchableOpacity>
           <View>
             <Text style={styles.headerTitle}>Unable to Deliver</Text>
-            <Text style={styles.headerSub}>{order?.order_name}</Text>
+            <Text style={styles.headerSub}>{formatOrderName(order?.order_name)}</Text>
           </View>
         </View>
 
