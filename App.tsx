@@ -14,6 +14,13 @@ import AuthStack from './src/navigations/AuthStack'
 import DeliveryStack from './src/navigations/DeliveryStack'
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { checkForAppUpdate, openAppStore } from './src/utils/checkForUpdate';
+import UpdateAvailableModal from './src/components/UpdateAvailableModal';
+
+type AppUpdateInfo = {
+  storeVersion?: string;
+  storeUrl: string;
+};
 
 
 function App() {
@@ -29,6 +36,8 @@ function App() {
 
 function AppContent() {
   const [userToken, setUserToken] =useState()
+  const [updateInfo, setUpdateInfo] = useState<AppUpdateInfo | null>(null);
+
   useEffect(() => {
     const tokenn = async()=>{
       const token = await AsyncStorage.getItem('token');
@@ -37,7 +46,16 @@ function AppContent() {
       setUserToken(token)
     }
     tokenn()
+    checkForAppUpdate().then(setUpdateInfo)
   }, [])
+
+  const handleInstallUpdate = () => {
+    const storeUrl = updateInfo?.storeUrl;
+    setUpdateInfo(null);
+    if (storeUrl) {
+      openAppStore(storeUrl);
+    }
+  };
 
   return (
    <KeyboardAvoidingView
@@ -50,6 +68,13 @@ function AppContent() {
           {userToken ? <DeliveryStack /> : <AuthStack />}
         </NavigationContainer>
       </View>
+
+      <UpdateAvailableModal
+        visible={updateInfo != null}
+        storeVersion={updateInfo?.storeVersion}
+        onUpdate={handleInstallUpdate}
+        onLater={() => setUpdateInfo(null)}
+      />
     </KeyboardAvoidingView>
   );
 }
