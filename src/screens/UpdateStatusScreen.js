@@ -15,7 +15,8 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import COLORS from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
-import { supabase } from '../lib/supabase';
+import ReactNativeBlobUtil from 'react-native-blob-util';
+import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { formatOrderName } from '../utils';
 
 export default function UpdateStatusScreen({ navigation, route }) {
@@ -66,15 +67,8 @@ export default function UpdateStatusScreen({ navigation, route }) {
     });
   };
 
-  /* ================= HELPERS ================= */
-
-  const uriToArrayBuffer = async uri => {
-    const response = await fetch(uri);
-    return await response.arrayBuffer();
-  };
-
   /* ================= SUBMIT ================= */
-  const handleSubmitAndroid = async () => {
+  const handleSubmit = async () => {
     if (!photo) {
       Alert.alert('Error', 'Please upload delivery photo');
       return;
@@ -83,87 +77,43 @@ export default function UpdateStatusScreen({ navigation, route }) {
     try {
       setLoading(true);
 
+      // fileName is mostly null on iOS, so fall back to the uri extension
       const ext =
         photo.fileName?.split('.').pop() || photo.uri.split('.').pop() || 'jpg';
 
       const fileName = `order-${OrderId}-${Date.now()}.${ext}`;
       const filePath = `deliveries/${fileName}`;
 
-      // ✅ ANDROID SAFE: file uri → blob
-      const response = await fetch(photo.uri);
-      const fileBlob = await response.blob();
+      // Stream the file straight off disk. React Native's fetch cannot carry a
+      // Blob or ArrayBuffer body to Supabase storage (a Blob is serialised as an
+      // empty body -> "No content provided", an ArrayBuffer never sends at all),
+      // so upload through react-native-blob-util instead.
+      const diskPath = decodeURI(photo.uri.replace('file://', ''));
 
-      const { error: uploadError } = await supabase.storage
-        .from('order-proofs')
-        .upload(filePath, fileBlob, {
-          contentType: photo.type || 'image/jpeg',
-          upsert: true,
-        });
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (uploadError) {
-        console.log('ANDROID UPLOAD ERROR:', uploadError);
-        Alert.alert('Error', 'Image upload failed (Android)');
+      if (!session) {
+        Alert.alert('Error', 'Your session expired. Please login again.');
         return;
       }
 
-      const { data } = supabase.storage
-        .from('order-proofs')
-        .getPublicUrl(filePath);
+      const uploadRes = await ReactNativeBlobUtil.fetch(
+        'POST',
+        `${SUPABASE_URL}/storage/v1/object/order-proofs/${filePath}`,
+        {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': photo.type || 'image/jpeg',
+          'x-upsert': 'true',
+        },
+        ReactNativeBlobUtil.wrap(diskPath),
+      );
 
-      const { error: updateError } = await supabase
-        .from('orders')
-        .update({
-          recipient_name: recipient || null,
-          delivery_note: notes || null,
-          delivery_proof_image: data.publicUrl,
-          deliveryStatus: 'completed',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', OrderId);
+      const uploadStatus = uploadRes.info().status;
 
-      if (updateError) {
-        console.log('ANDROID UPDATE ERROR:', updateError);
-        Alert.alert('Error', 'Order update failed (Android)');
-        return;
-      }
-
-      Alert.alert('Success', 'Order marked as delivered');
-      navigation.goBack();
-    } catch (err) {
-      console.log('ANDROID CATCH ERROR:', err);
-      Alert.alert('Error', 'Network error on Android');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSubmitIOS = async () => {
-    if (!photo) {
-      Alert.alert('Error', 'Please upload delivery photo');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // iOS SAFE filename (fileName mostly null on iOS)
-      const ext =
-        photo.fileName?.split('.').pop() || photo.uri.split('.').pop() || 'jpg';
-
-      const fileName = `order-${OrderId}-${Date.now()}.${ext}`;
-      const filePath = `deliveries/${fileName}`;
-
-      const fileBuffer = await uriToArrayBuffer(photo.uri);
-
-      const { error: uploadError } = await supabase.storage
-        .from('order-proofs')
-        .upload(filePath, fileBuffer, {
-          contentType: photo.type || 'image/jpeg',
-          upsert: true,
-        });
-
-      if (uploadError) {
-        console.log('UPLOAD ERROR:', uploadError);
+      if (uploadStatus < 200 || uploadStatus >= 300) {
+        console.log('UPLOAD ERROR:', uploadStatus, uploadRes.data);
         Alert.alert('Error', 'Image upload failed');
         return;
       }
@@ -196,14 +146,6 @@ export default function UpdateStatusScreen({ navigation, route }) {
       Alert.alert('Error', 'Something went wrong');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSubmit = () => {
-    if (Platform.OS === 'android') {
-      handleSubmitAndroid();
-    } else {
-      handleSubmitIOS();
     }
   };
 
