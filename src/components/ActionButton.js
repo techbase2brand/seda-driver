@@ -5,17 +5,23 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 import { fontFamilyBody } from '../constants/Fonts';
 
-const ActionButton = ({ title, icon, colors, onPress }) => {
+const ActionButton = ({ title, icon, colors, onPress, disabled }) => {
+  const tint = disabled ? Colors.textGray : Colors.WHITE;
+
   return (
     <LinearGradient
-      colors={colors}
+      colors={disabled ? [Colors.DISABLED, Colors.DISABLED] : colors}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 0 }}
       style={styles.gradient}
     >
-      <TouchableOpacity onPress={onPress} style={styles.btn}>
-        <Icon name={icon} size={18} color={Colors.WHITE} />
-        <Text style={styles.text}>{title}</Text>
+      <TouchableOpacity
+        onPress={onPress}
+        style={styles.btn}
+        disabled={disabled}
+      >
+        <Icon name={icon} size={18} color={tint} />
+        <Text style={[styles.text, { color: tint }]}>{title}</Text>
       </TouchableOpacity>
     </LinearGradient>
   );

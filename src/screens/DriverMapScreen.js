@@ -301,28 +301,9 @@ import Color from '../constants/Color';
 import { fontFamilyHeading } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
+import { buildAddressString } from '../utils';
 
-function getFinalAddressString(addr) {
-  if (typeof addr === 'string') {
-    return addr;
-  }
-
-  if (Array.isArray(addr)) {
-    const selected = addr.find(item => item.isSelected === true) || addr[0];
-
-    if (typeof selected === 'object') {
-      return selected.address || selected.delivery_address || '';
-    }
-
-    return selected || '';
-  }
-
-  if (typeof addr === 'object' && addr !== null) {
-    return addr.address || addr.delivery_address || '';
-  }
-
-  return '';
-}
+const IOS_PERMISSION_TIMEOUT_MS = 15000;
 
 async function requestIOSLocationPermission() {
   if (Platform.OS !== 'ios') {
@@ -335,11 +316,44 @@ async function requestIOSLocationPermission() {
   });
 
   return new Promise(resolve => {
+    let settled = false;
+
+    const finish = value => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      clearTimeout(timer);
+      resolve(value);
+    };
+
+    // iOS does not always invoke either callback - most commonly when the user
+    // picks "Allow While Using App" while we asked for "always". Without this
+    // timeout the promise never settles and the disclosure modal stays on
+    // screen with no way out (the driver has to force-quit the app).
+    // Resolving true lets the driver continue: if location really is blocked,
+    // fetchLocationWithFallback below fails and shows the proper error.
+    const timer = setTimeout(() => finish(true), IOS_PERMISSION_TIMEOUT_MS);
+
     Geolocation.requestAuthorization(
-      () => resolve(true),
-      () => resolve(false),
+      () => finish(true),
+      () => finish(false),
     );
   });
+}
+
+/** True when Android foreground location is already granted. */
+async function hasForegroundLocation() {
+  if (Platform.OS !== 'android') {
+    return false;
+  }
+
+  const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
+  const coarse = PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION;
+  return (
+    (await PermissionsAndroid.check(fine)) ||
+    (await PermissionsAndroid.check(coarse))
+  );
 }
 
 async function requestAndroidLocationPermission() {
@@ -348,15 +362,20 @@ async function requestAndroidLocationPermission() {
   }
   const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
   const coarse = PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION;
-  const hasFine = await PermissionsAndroid.check(fine);
-  const hasCoarse = await PermissionsAndroid.check(coarse);
-  if (hasFine || hasCoarse) {
-    return true;
-  }
   const result = await PermissionsAndroid.requestMultiple([fine, coarse]);
   return (
     result[fine] === PermissionsAndroid.RESULTS.GRANTED ||
     result[coarse] === PermissionsAndroid.RESULTS.GRANTED
+  );
+}
+
+/** True when Android background location is already granted, or not needed. */
+async function hasBackgroundLocation() {
+  if (Platform.OS !== 'android' || Platform.Version < 29) {
+    return true;
+  }
+  return PermissionsAndroid.check(
+    PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
   );
 }
 
@@ -366,22 +385,26 @@ const getCurrentPositionAsync = options =>
   });
 
 /** GPS first, then network / cached — helps Android indoors. */
+/**
+ * Gets a position fast enough to draw the route.
+ * A coarse or cached fix is plenty for the map origin - watchPosition below
+ * refines it within seconds. Asking for high accuracy first meant waiting up
+ * to 25s for a GPS lock (and 45s in total when it timed out), which is why the
+ * map felt stuck on the loading spinner, especially indoors on Android.
+ */
 async function fetchLocationWithFallback() {
   try {
     return await getCurrentPositionAsync({
-      enableHighAccuracy: true,
-      timeout: 25000,
-      maximumAge: 10000,
+      enableHighAccuracy: false,
+      timeout: 8000,
+      maximumAge: 600000,
     });
   } catch (e1) {
-    console.log(
-      'DriverMap: high-accuracy location failed, trying low accuracy',
-      e1,
-    );
+    console.log('DriverMap: no quick fix available, trying GPS', e1);
     return await getCurrentPositionAsync({
-      enableHighAccuracy: false,
+      enableHighAccuracy: true,
       timeout: 20000,
-      maximumAge: 300000,
+      maximumAge: 0,
     });
   }
 }
@@ -389,7 +412,6 @@ async function fetchLocationWithFallback() {
 const DriverMapScreen = ({ navigation, route }) => {
   const mapRef = useRef(null);
   const disclosureResolverRef = useRef(null);
-  const retryTimeoutRef = useRef(null);
   const mountedRef = useRef(true);
 
   const deliveryAddress = route?.params?.address;
@@ -402,7 +424,6 @@ const DriverMapScreen = ({ navigation, route }) => {
   const [locationError, setLocationError] = useState(null);
   const [destinationError, setDestinationError] = useState(null);
   const [showBackgroundDisclosure, setShowBackgroundDisclosure] = useState(false);
-  const [retryTick, setRetryTick] = useState(0);
 
   const saveLocationToSupabase = useCallback(async (lat, lng) => {
     try {
@@ -462,62 +483,51 @@ const DriverMapScreen = ({ navigation, route }) => {
     });
   }, []);
 
-  const handleBackgroundDisclosureContinue = useCallback(async () => {
-    let granted = true;
-    if (Platform.OS === 'ios') {
-      granted = await requestIOSLocationPermission();
-    }
-
-    setShowBackgroundDisclosure(false);
+  const settleDisclosure = useCallback(granted => {
     if (disclosureResolverRef.current) {
       disclosureResolverRef.current(granted);
       disclosureResolverRef.current = null;
     }
   }, []);
 
+  const handleBackgroundDisclosureContinue = useCallback(async () => {
+    // Hide our sheet straight away so the driver never sees a frozen screen
+    // while the system permission dialog is up.
+    setShowBackgroundDisclosure(false);
+
+    let granted = true;
+    if (Platform.OS === 'ios') {
+      granted = await requestIOSLocationPermission();
+    }
+
+    settleDisclosure(granted);
+  }, [settleDisclosure]);
+
+  const handleBackgroundDisclosureSkip = useCallback(() => {
+    setShowBackgroundDisclosure(false);
+    settleDisclosure(false);
+  }, [settleDisclosure]);
+
   const requestBackgroundLocationPermission = useCallback(async () => {
     if (Platform.OS !== 'android' || Platform.Version < 29) {
-      return true;
+      return PermissionsAndroid.RESULTS.GRANTED;
     }
 
     const backgroundPermission =
       PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION;
-    const hasBackground = await PermissionsAndroid.check(backgroundPermission);
-    if (hasBackground) {
-      return true;
-    }
 
-    const result = await PermissionsAndroid.request(backgroundPermission);
-    return result === PermissionsAndroid.RESULTS.GRANTED;
+    return PermissionsAndroid.request(backgroundPermission);
   }, []);
-
-  const clearBackgroundRetry = useCallback(() => {
-    if (retryTimeoutRef.current) {
-      clearTimeout(retryTimeoutRef.current);
-      retryTimeoutRef.current = null;
-    }
-  }, []);
-
-  const schedulePermissionRetry = useCallback(() => {
-    clearBackgroundRetry();
-    retryTimeoutRef.current = setTimeout(() => {
-      if (!mountedRef.current) {
-        return;
-      }
-      setRetryTick(prev => prev + 1);
-    }, 60000);
-  }, [clearBackgroundRetry]);
 
   useEffect(() => {
     return () => {
       mountedRef.current = false;
-      clearBackgroundRetry();
       if (disclosureResolverRef.current) {
         disclosureResolverRef.current(false);
         disclosureResolverRef.current = null;
       }
     };
-  }, [clearBackgroundRetry]);
+  }, []);
 
   const loadMapData = useCallback(async () => {
     setLocationError(null);
@@ -526,7 +536,7 @@ const DriverMapScreen = ({ navigation, route }) => {
     setCurrentLocation(null);
     setLoading(true);
 
-    const finalAddress = getFinalAddressString(deliveryAddress);
+    const finalAddress = buildAddressString(deliveryAddress);
     console.log('FINAL ADDRESS >>>', finalAddress);
 
     const geoPromise = finalAddress
@@ -534,37 +544,48 @@ const DriverMapScreen = ({ navigation, route }) => {
       : Promise.resolve();
 
     try {
-      const consentGiven = await askLocationDisclosureConsent();
-      if (!consentGiven) {
-        setLocationError(
-          'Location and background location are required for live delivery tracking. We will ask again in 1 minute.',
-        );
-        schedulePermissionRetry();
-        await geoPromise.catch(() => {});
-        return;
+      // 1. Foreground location.
+      //    iOS shows its own dialog once and never again, so calling this when
+      //    the driver already answered costs nothing and shows no popup.
+      //    On Android we check first, so an allowed driver is never re-asked.
+      if (Platform.OS === 'ios') {
+        await requestIOSLocationPermission();
+      } else if (!(await hasForegroundLocation())) {
+        const granted = await requestAndroidLocationPermission();
+        if (!granted) {
+          setLocationError(
+            'Location permission is needed to show you the route. Please allow location access, then tap "Try again".',
+          );
+          await geoPromise.catch(() => {});
+          return;
+        }
       }
 
-      const granted = await requestAndroidLocationPermission();
-      if (!granted) {
-        setLocationError(
-          'Location permission is required for delivery navigation. We will ask again in 1 minute.',
-        );
-        schedulePermissionRetry();
-        await geoPromise.catch(() => {});
-        return;
-      }
+      // 2. Background location - Android only, and optional.
+      //    We ask only while the permission is still missing: once the driver
+      //    allows it, hasBackgroundLocation() is true and the sheet never
+      //    appears again. If they decline we do ask next time, so nobody who
+      //    said yes gets nagged and nobody who said no is silently dropped.
+      if (Platform.OS === 'android' && !(await hasBackgroundLocation())) {
+        const consentGiven = await askLocationDisclosureConsent();
 
-      const backgroundGranted = await requestBackgroundLocationPermission();
-      if (!backgroundGranted) {
-        setLocationError(
-          'Background location is required to track deliveries when the app is minimized. We will ask again in 1 minute.',
-        );
-        schedulePermissionRetry();
-        await geoPromise.catch(() => {});
-        return;
-      }
+        if (consentGiven) {
+          const result = await requestBackgroundLocationPermission();
 
-      clearBackgroundRetry();
+          if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+            // Android will not show its dialog any more, so our sheet alone
+            // would be a dead end. Point them at Settings instead.
+            Alert.alert(
+              'Allow background location',
+              'Android has stopped asking for this permission. To turn on live tracking, open Settings > Apps > Coconut Driver > Permissions > Location and choose "Allow all the time".',
+            );
+          } else if (result !== PermissionsAndroid.RESULTS.GRANTED) {
+            console.log(
+              'DriverMap: background location declined - live tracking will only run while the app is open',
+            );
+          }
+        }
+      }
 
       const position = await fetchLocationWithFallback();
       const { latitude, longitude } = position.coords;
@@ -586,17 +607,15 @@ const DriverMapScreen = ({ navigation, route }) => {
       setLoading(false);
     }
   }, [
-    clearBackgroundRetry,
     deliveryAddress,
     getCoordinatesFromAddress,
     requestBackgroundLocationPermission,
-    schedulePermissionRetry,
     askLocationDisclosureConsent,
   ]);
 
   useEffect(() => {
     loadMapData();
-  }, [loadMapData, retryTick]);
+  }, [loadMapData]);
 
   const hasLocationFix = currentLocation != null;
 
@@ -626,7 +645,7 @@ const DriverMapScreen = ({ navigation, route }) => {
       visible={showBackgroundDisclosure}
       transparent
       animationType="fade"
-      onRequestClose={() => {}}
+      onRequestClose={handleBackgroundDisclosureSkip}
     >
       <View style={styles.disclosureBackdrop}>
         <View style={styles.disclosureCard}>
@@ -645,7 +664,14 @@ const DriverMapScreen = ({ navigation, route }) => {
             style={styles.retryButton}
             onPress={handleBackgroundDisclosureContinue}
           >
-            <Text style={styles.retryButtonText}>Continue</Text>
+            <Text style={styles.retryButtonText}>Allow</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={handleBackgroundDisclosureSkip}
+          >
+            <Text style={styles.secondaryButtonText}>Not now</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -713,7 +739,7 @@ const DriverMapScreen = ({ navigation, route }) => {
 
         <Marker
           coordinate={destination}
-          title={getFinalAddressString(deliveryAddress)}
+          title={buildAddressString(deliveryAddress)}
         />
 
         <MapViewDirections

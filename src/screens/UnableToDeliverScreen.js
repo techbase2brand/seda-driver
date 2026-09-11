@@ -13,7 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
-import { formatOrderName } from '../utils';
+import { parseCustomerDetails, formatOrderName } from '../utils';
 
 const COLORS = {
   RED: '#FF0033',
@@ -37,9 +37,7 @@ export default function UnableToDeliverScreen({ navigation, route }) {
   const OrderId = order?.id;
 
   const customer =
-    typeof order?.customer_details === 'string'
-      ? JSON.parse(order.customer_details)
-      : order?.customer_details;
+    parseCustomerDetails(order?.customer_details);
   /* ========== IMAGE PICKERS ========== */
 
   const handleSubmit = async () => {

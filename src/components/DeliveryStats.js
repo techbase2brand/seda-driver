@@ -40,20 +40,17 @@ const DeliveryStats = ({ orders }) => {
   const inProgressCount = orders?.filter(
     item => normalize(item?.deliveryStatus) === 'in transit',
   )?.length;
-  const inAssignedCount = orders?.filter(item => {
-    const status = normalize(item?.deliveryStatus);
-    return (
-      status !== 'completed' &&
-      status !== 'unable to deliver' &&
-      status !== 'in transit'
-    );
-  })?.length;
+  // "Total Orders" must mean every order for the day. It used to exclude
+  // completed, undelivered AND in-transit orders, so the moment a driver
+  // tapped "Mark All In Transit" the total dropped to 0 while the orders were
+  // still sitting in the list.
+  const totalOrdersCount = orders?.length || 0;
 
   return (
     <View style={styles.row}>
       <StatCard
         icon="cube-outline"
-        value={inAssignedCount}
+        value={totalOrdersCount}
         label="Total Orders"
         bg="#0A4DFF"
         gradient={['#0a24a7ff', '#305FFD']}

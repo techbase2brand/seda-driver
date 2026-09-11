@@ -17,7 +17,7 @@ import COLORS from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
-import { formatOrderName } from '../utils';
+import { parseCustomerDetails, formatOrderName } from '../utils';
 
 export default function UpdateStatusScreen({ navigation, route }) {
   const [recipient, setRecipient] = useState('');
@@ -29,9 +29,7 @@ export default function UpdateStatusScreen({ navigation, route }) {
   const OrderId = order?.id;
 
   const customer =
-    typeof order?.customer_details === 'string'
-      ? JSON.parse(order.customer_details)
-      : order?.customer_details;
+    parseCustomerDetails(order?.customer_details);
 
   const requestCameraPermission = async () => {
     if (Platform.OS === 'android') {

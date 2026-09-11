@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -7,12 +7,14 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import Colors from '../constants/Color';
 import HeaderBar from '../components/HeaderBar';
 import { InfoCard, InfoRow } from '../components/InfoCard';
 import ActionButton from '../components/ActionButton';
 import InstructionCard from '../components/InstructionCard';
 import { supabase } from '../lib/supabase';
+import { parseCustomerDetails, buildAddressString } from '../utils';
 
 const DeliveryDetailsScreen = ({ navigation, route }) => {
   // const phoneNumber = '9876543210';
@@ -20,14 +22,9 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
   const orderId = route?.params?.orderId;
   const [order, setOrder] = useState(null);
 
-  console.log('orderorder>>', order);
-  useEffect(() => {
-    if (orderId) {
-      fetchOrder();
-    }
-  }, [orderId]);
+  const fetchOrder = useCallback(async () => {
+    if (!orderId) return;
 
-  const fetchOrder = async () => {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -40,12 +37,20 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
     }
 
     setOrder(data);
-  };
+  }, [orderId]);
+
+  // Refetch every time the screen comes back into focus. Without this the
+  // screen kept the copy it loaded on first open, so after submitting a
+  // delivery the driver came back to a stale screen that still offered
+  // "Mark as Delivered" for an order that was already completed.
+  useFocusEffect(
+    useCallback(() => {
+      fetchOrder();
+    }, [fetchOrder]),
+  );
 
   const customer =
-    typeof order?.customer_details === 'string'
-      ? JSON.parse(order.customer_details)
-      : order?.customer_details;
+    parseCustomerDetails(order?.customer_details);
       const rawAddresses = customer?.delivery_address;
 
   // always convert to array
@@ -73,9 +78,18 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
 
     return `${day}-${month}-${year}`;
   };
-  const onCallPress = phoneNumber => {
-    const url = `tel:${phoneNumber}`;
-    Linking.openURL(url).catch(() => Alert.alert('Error', ''));
+  const onCallPress = phone => {
+    if (!phone) {
+      Alert.alert(
+        'No phone number',
+        'This order has no customer phone number saved. Please contact your office.',
+      );
+      return;
+    }
+
+    Linking.openURL(`tel:${phone}`).catch(() =>
+      Alert.alert('Error', 'Could not start the call from this device.'),
+    );
   };
   // const deliveredNavigation = () => {
   //   navigation.navigate('UpdateStatusScreen');
@@ -97,6 +111,17 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
     //     Alert.alert('Error', 'Map Not working'),
     //   );
   };
+
+  // customer_details is sometimes empty even though the order itself carries a
+  // delivery_address. The order card already falls back to it, so the details
+  // screen and the Navigate button must do the same - otherwise the map says
+  // "No delivery address was found" for an order that does have one.
+  const phoneNumber = String(customer?.phone ?? '').trim();
+
+  const deliveryAddress =
+    buildAddressString(selectedAddress) ||
+    buildAddressString(customer?.delivery_address) ||
+    buildAddressString(order?.delivery_address);
 
   const isDelivered = order?.deliveryStatus === 'completed';
 
@@ -143,11 +168,7 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
           <InfoRow
             icon="location-outline"
             label="Delivery Address"
-            value={selectedAddress?.street && selectedAddress?.street !== undefined
-            ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.zipCode}`
-            : customer?.delivery_address}
-              
-              // `${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}`}
+            value={deliveryAddress || '-'}
           />
 
           <View
@@ -163,7 +184,8 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
                 title="Call"
                 icon="call-outline"
                 colors={Colors.successGradient}
-                onPress={() => onCallPress(customer?.phone)}
+                disabled={!phoneNumber}
+                onPress={() => onCallPress(phoneNumber)}
               />
             </View>
             {!isDelivered && (
@@ -172,7 +194,8 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
                   title="Navigate"
                   icon="navigate-outline"
                   colors={[Colors.PRIMARY_LOW, Colors.PRIMARY_DARK]}
-                  onPress={() => onNavigatePress(selectedAddress || customer?.delivery_address)}
+                  disabled={!deliveryAddress}
+                  onPress={() => onNavigatePress(deliveryAddress)}
                 />
               </View>
             )}

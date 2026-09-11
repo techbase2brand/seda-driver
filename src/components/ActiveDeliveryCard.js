@@ -4,7 +4,13 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Colors from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import GradientButton from './GradientButton';
-import { widthPercentageToDP, formatOrderName } from '../utils';
+import {
+  widthPercentageToDP,
+  formatOrderName,
+  parseCustomerDetails,
+  buildCustomerName,
+  buildAddressString,
+} from '../utils';
 import LinearGradient from 'react-native-linear-gradient';
 
 const ActiveDeliveryCard = ({ item, navigation }) => {
@@ -15,20 +21,26 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
   const handleNavigation = () => {
     navigation.navigate('UpdateStatusScreen', { order: item });
   };
-  const companyDetail = JSON.parse(item?.customer_details);
-  const rawAddresses = companyDetail?.delivery_address;
+  const companyDetail = parseCustomerDetails(item?.customer_details);
 
-  // always convert to array
-  const deliveryAddresses = Array.isArray(rawAddresses)
-    ? rawAddresses
-    : rawAddresses
-    ? [rawAddresses]
-    : [];
+  const customerName = buildCustomerName(companyDetail);
+  const companyName = companyDetail?.company_name?.trim?.() || '';
 
-  const selectedAddress =
-    deliveryAddresses.length === 1
-      ? deliveryAddresses[0]
-      : deliveryAddresses.find(addr => addr?.isSelected === true);
+  // Show whichever we have. The company row used to render blank whenever
+  // company_name was empty, which is why drivers reported "customer names are
+  // not showing" on the order list.
+  const primaryLabel = companyName || customerName;
+  // Only worth a second row when it actually adds information.
+  const secondaryLabel =
+    companyName &&
+    customerName &&
+    customerName.toLowerCase() !== companyName.toLowerCase()
+      ? customerName
+      : '';
+
+  const addressLabel =
+    buildAddressString(companyDetail?.delivery_address) ||
+    buildAddressString(item?.delivery_address);
 
   const status = (item?.deliveryStatus || '').toLowerCase().trim();
 
@@ -61,7 +73,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <View style={styles.headerLeft}>
           {item?.stop_number && (
             <LinearGradient
               colors={['#84b9dcff', '#4AA3DF']}
@@ -78,7 +90,11 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
               </Text>
             </LinearGradient>
           )}
-          <Text style={styles.order} ellipsizeMode="tail">
+          {status === 'completed' && (
+            <Icon name="checkmark-circle" size={18} color={'#0FA958'} />
+          )}
+
+          <Text style={styles.order} numberOfLines={2}>
             {formatOrderName(item.order_name)}
           </Text>
         </View>
@@ -98,7 +114,7 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       >
         <View style={styles.row}>
           <Icon name="business-outline" size={18} />
-          <Text style={styles.text}>{companyDetail?.company_name}</Text>
+          <Text style={styles.text}>{primaryLabel || '-'}</Text>
         </View>
         {!!item?.deliveryStatus && (
           <View
@@ -117,16 +133,15 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       </View>
       <View style={styles.row}>
         <Icon name="location-outline" size={18} />
-        <Text style={styles.text}>
-          {selectedAddress?.street && selectedAddress?.street !== undefined
-            ? `${selectedAddress.street}, ${selectedAddress.city}, ${selectedAddress.state}, ${selectedAddress.zipCode}`
-            : item?.delivery_address}
-        </Text>
-        {/* <Text style={styles.text}>
-          {`${selectedAddress?.street}, ${selectedAddress?.city}, ${selectedAddress?.state}, ${selectedAddress?.zipCode}` ||
-            item?.delivery_address}
-        </Text> */}
+        <Text style={styles.text}>{addressLabel || '-'}</Text>
       </View>
+      {!!secondaryLabel && (
+        <View style={styles.row}>
+          <Icon name="person-outline" size={18} />
+          <Text style={styles.text}>{secondaryLabel}</Text>
+        </View>
+      )}
+
       {companyDetail?.delivery_zone_name && (
         <View style={styles.row}>
           <Icon name="cube-outline" size={18} />
@@ -226,6 +241,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexShrink: 1,
+    flex: 1,
+    paddingRight: 8,
   },
   stopNumberText: {
     color: '#fff',

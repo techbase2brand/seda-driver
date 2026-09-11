@@ -25,7 +25,9 @@ const OrderSection = ({ title, data, navigation }) => {
 
   return (
     <View style={{ marginBottom: 24 }}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.title}>
+        {title} ({data.length})
+      </Text>
 
       <FlatList
         data={data}
@@ -63,7 +65,6 @@ const DeliveriesScreen = ({ navigation }) => {
     console.log('token>>', token);
     console.log('driver_id>>', dIdNum);
     console.log('franchise_id>>', fIdClean);
-    console.log('orders>>', orders.length);
 
     setDriverId(dIdNum);
     setFranchiseId(fIdClean);
@@ -171,15 +172,52 @@ const DeliveriesScreen = ({ navigation }) => {
     };
   }, [fetchOrders, loadIdsFromStorage, markAllOrder]);
 
-  // Poll every 15 seconds only when screen is focused (silent, no loading/UI effect)
+  // Refetch the moment the screen is focused, then keep polling as a fallback.
+  // The immediate fetch matters when coming back from a delivery - the list
+  // used to sit on stale data until the next 15s tick.
   useFocusEffect(
     useCallback(() => {
+      fetchOrders({ dIdNum: driverId, fIdClean: franchiseId });
+
       const id = setInterval(() => {
         fetchOrders({ dIdNum: driverId, fIdClean: franchiseId });
       }, POLL_INTERVAL_MS);
       return () => clearInterval(id);
     }, [fetchOrders, driverId, franchiseId]),
   );
+
+  // Live updates. Supabase pushes every change to this driver's orders, so a
+  // status change made in the warehouse app shows up straight away instead of
+  // waiting for the next poll. The poll above stays as a safety net in case
+  // Realtime is not enabled for the orders table.
+  useEffect(() => {
+    if (!driverId) {
+      return undefined;
+    }
+
+    const channel = supabase
+      .channel(`orders-driver-${driverId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders',
+          filter: `driver_id=eq.${driverId}`,
+        },
+        payload => {
+          console.log('Realtime order change:', payload.eventType);
+          fetchOrders({ dIdNum: driverId, fIdClean: franchiseId });
+        },
+      )
+      .subscribe(status => {
+        console.log('Realtime channel status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [driverId, franchiseId, fetchOrders]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
