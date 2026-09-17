@@ -18,6 +18,7 @@ import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { parseCustomerDetails, formatOrderName } from '../utils';
+import { notifyCustomerOrderDelivered } from '../services/customerNotifications';
 
 export default function UpdateStatusScreen({ navigation, route }) {
   const [recipient, setRecipient] = useState('');
@@ -136,6 +137,13 @@ export default function UpdateStatusScreen({ navigation, route }) {
         Alert.alert('Error', 'Order update failed');
         return;
       }
+
+      // Best-effort: the delivery itself already succeeded above, so a
+      // notification failure must never block the driver or roll back the
+      // completed status. Errors are logged, not surfaced to the driver.
+      notifyCustomerOrderDelivered(order, customer).catch(err =>
+        console.log('CUSTOMER NOTIFICATION ERROR:', err),
+      );
 
       Alert.alert('Success', 'Order marked as delivered');
       navigation.goBack();

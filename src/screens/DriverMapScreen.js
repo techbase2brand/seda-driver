@@ -379,6 +379,38 @@ async function hasBackgroundLocation() {
   );
 }
 
+/** Rejects if a promise never settles, so the UI can never hang forever. */
+const withTimeout = (promise, ms, label) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out`)), ms),
+    ),
+  ]);
+
+/** Rough metres between two coordinates (haversine). */
+const distanceInMetres = (a, b) => {
+  if (!a || !b) return Infinity;
+
+  const toRad = deg => (deg * Math.PI) / 180;
+  const R = 6371000;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLon = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+
+  return 2 * R * Math.asin(Math.sqrt(h));
+};
+
+// How far the driver must move before we ask Google for a fresh route. The
+// marker follows every GPS tick, but redrawing the route on every tick would
+// fire a Directions request every couple of seconds while driving.
+const ROUTE_REFRESH_METRES = 150;
+
 const getCurrentPositionAsync = options =>
   new Promise((resolve, reject) => {
     Geolocation.getCurrentPosition(resolve, reject, options);
@@ -424,6 +456,11 @@ const DriverMapScreen = ({ navigation, route }) => {
   const [locationError, setLocationError] = useState(null);
   const [destinationError, setDestinationError] = useState(null);
   const [showBackgroundDisclosure, setShowBackgroundDisclosure] = useState(false);
+  // Route origin is throttled separately from the live marker position.
+  const [routeOrigin, setRouteOrigin] = useState(null);
+  const [routeError, setRouteError] = useState(null);
+  const hasFittedRouteRef = useRef(false);
+  const routeCoordsRef = useRef(null);
 
   const saveLocationToSupabase = useCallback(async (lat, lng) => {
     try {
@@ -454,7 +491,7 @@ const DriverMapScreen = ({ navigation, route }) => {
         address,
       )}&key=${GOOGLE_MAPS_APIKEY}`;
 
-      const response = await fetch(url);
+      const response = await withTimeout(fetch(url), 15000, 'Geocoding');
       const json = await response.json();
 
       if (json.results?.length > 0) {
@@ -508,6 +545,30 @@ const DriverMapScreen = ({ navigation, route }) => {
     settleDisclosure(false);
   }, [settleDisclosure]);
 
+  /**
+   * Brings the whole route back into view. The camera is deliberately left
+   * alone after the first fit so it never yanks while the driver is panning,
+   * which means they need a way to get the overview back.
+   */
+  const handleRecenter = useCallback(() => {
+    if (!mapRef.current) {
+      return;
+    }
+
+    const coords = routeCoordsRef.current?.length
+      ? routeCoordsRef.current
+      : [currentLocation, destination].filter(Boolean);
+
+    if (!coords.length) {
+      return;
+    }
+
+    mapRef.current.fitToCoordinates(coords, {
+      edgePadding: { top: 80, bottom: 120, left: 60, right: 60 },
+      animated: true,
+    });
+  }, [currentLocation, destination]);
+
   const requestBackgroundLocationPermission = useCallback(async () => {
     if (Platform.OS !== 'android' || Platform.Version < 29) {
       return PermissionsAndroid.RESULTS.GRANTED;
@@ -534,6 +595,10 @@ const DriverMapScreen = ({ navigation, route }) => {
     setDestinationError(null);
     setDestination(null);
     setCurrentLocation(null);
+    setRouteOrigin(null);
+    setRouteError(null);
+    hasFittedRouteRef.current = false;
+    routeCoordsRef.current = null;
     setLoading(true);
 
     const finalAddress = buildAddressString(deliveryAddress);
@@ -587,9 +652,17 @@ const DriverMapScreen = ({ navigation, route }) => {
         }
       }
 
-      const position = await fetchLocationWithFallback();
+      // The native callbacks are not guaranteed to fire (a simulator with no
+      // location set never calls back at all), so race our own deadline -
+      // otherwise the screen sits on the spinner for ever with no error.
+      const position = await withTimeout(
+        fetchLocationWithFallback(),
+        35000,
+        'Location',
+      );
       const { latitude, longitude } = position.coords;
       setCurrentLocation({ latitude, longitude });
+      setRouteOrigin({ latitude, longitude });
 
       if (!finalAddress) {
         setDestinationError(
@@ -626,13 +699,28 @@ const DriverMapScreen = ({ navigation, route }) => {
     const watchId = Geolocation.watchPosition(
       async position => {
         const { latitude, longitude } = position.coords;
-        setCurrentLocation({ latitude, longitude });
+        const next = { latitude, longitude };
+
+        setCurrentLocation(next);
+
+        // Redraw the route only once the driver has actually moved a block or
+        // so. This is what makes the route follow the driver instead of
+        // staying on the line drawn when the screen opened.
+        setRouteOrigin(prev =>
+          distanceInMetres(prev, next) > ROUTE_REFRESH_METRES ? next : prev,
+        );
+
         await saveLocationToSupabase(latitude, longitude);
       },
       err => console.log('DriverMap: watchPosition', err),
       {
-        enableHighAccuracy: false,
-        distanceFilter: 10,
+        // Must be GPS. With enableHighAccuracy:false Android serves a coarse
+        // network fix that barely reports while driving, so currentLocation
+        // hardly changed and the route never refreshed.
+        enableHighAccuracy: true,
+        distanceFilter: 25,
+        interval: 5000,
+        fastestInterval: 2000,
       },
     );
 
@@ -723,11 +811,17 @@ const DriverMapScreen = ({ navigation, route }) => {
         </View>
       </View>
 
+      {!!routeError && (
+        <View style={styles.routeErrorBanner}>
+          <Icon name="alert-circle-outline" size={16} color={Color.WHITE} />
+          <Text style={styles.routeErrorText}>{routeError}</Text>
+        </View>
+      )}
+
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
         showsUserLocation
-        followsUserLocation
         initialRegion={{
           latitude: currentLocation.latitude,
           longitude: currentLocation.longitude,
@@ -743,18 +837,44 @@ const DriverMapScreen = ({ navigation, route }) => {
         />
 
         <MapViewDirections
-          origin={currentLocation}
+          origin={routeOrigin || currentLocation}
           destination={destination}
           apikey={GOOGLE_MAPS_APIKEY}
           strokeWidth={5}
           strokeColor="#1E90FF"
           onReady={result => {
+            setRouteError(null);
+            routeCoordsRef.current = result.coordinates;
+
+            // Frame the whole route once. Doing it on every refresh yanked the
+            // camera away from wherever the driver had panned to.
+            if (!mapRef.current || hasFittedRouteRef.current) {
+              return;
+            }
+            hasFittedRouteRef.current = true;
             mapRef.current.fitToCoordinates(result.coordinates, {
-              edgePadding: { top: 50, bottom: 50, left: 50, right: 50 },
+              edgePadding: { top: 80, bottom: 80, left: 60, right: 60 },
             });
+          }}
+          onError={err => {
+            // Without this the Directions call failed silently: the driver got
+            // a map with two pins and no line, and no idea why.
+            console.log('DriverMap: directions error', err);
+            setRouteError(
+              'Could not draw the driving route. The pins still show you and the delivery address.',
+            );
           }}
         />
       </MapView>
+
+      <TouchableOpacity
+        style={styles.recenterButton}
+        onPress={handleRecenter}
+        activeOpacity={0.85}
+        accessibilityLabel="Show the whole route"
+      >
+        <Icon name="navigate" size={22} color={Color.PRIMARY} />
+      </TouchableOpacity>
 
       {backgroundDisclosureModal}
     </View>
@@ -813,6 +933,36 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     fontFamily: fontFamilyHeading,
+  },
+  recenterButton: {
+    position: 'absolute',
+    right: 20,
+    bottom: 36,
+    height: 52,
+    width: 52,
+    borderRadius: 26,
+    backgroundColor: Color.WHITE,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.22,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  routeErrorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: Color.ERROR,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    zIndex: 10,
+  },
+  routeErrorText: {
+    color: Color.WHITE,
+    fontSize: 12,
+    flex: 1,
   },
   disclosureBackdrop: {
     flex: 1,
