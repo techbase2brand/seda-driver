@@ -83,7 +83,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { widthPercentageToDP } from '../utils';
 
-const DeliveriesHeader = ({ navigation, totaldeliveries }) => {
+const DeliveriesHeader = ({ navigation, totaldeliveries, hasEligibleOrders }) => {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleConfirmLogout = async () => {
@@ -113,7 +113,9 @@ const DeliveriesHeader = ({ navigation, totaldeliveries }) => {
   return (
     <>
       {/* ===== HEADER ===== */}
-      <View style={styles.header}>
+      <View
+        style={[styles.header, !hasEligibleOrders && styles.headerCompact]}
+      >
         <View style={styles.row}>
           <Image
             source={require('../assets/login_logo.png')}
@@ -185,7 +187,14 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.PRIMARY,
     paddingHorizontal: 20,
     paddingTop:Platform.OS === 'ios' ? widthPercentageToDP(10) : widthPercentageToDP(4),
+    // Tall by default to leave room for the MarkAllTransitCard, which sits
+    // absolutely positioned on top of this header. When there is no card to
+    // show, headerCompact below shrinks this back down so the banner does
+    // not leave a block of empty blue space.
     paddingBottom: Platform.OS === 'ios' ? 90 : 60,
+  },
+  headerCompact: {
+    paddingBottom: Platform.OS === 'ios' ? 24 : 20,
   },
 
   row: {

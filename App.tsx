@@ -16,6 +16,10 @@ import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { checkForAppUpdate, openAppStore } from './src/utils/checkForUpdate';
 import UpdateAvailableModal from './src/components/UpdateAvailableModal';
+import {
+  startDriverLocationTracking,
+  stopDriverLocationTracking,
+} from './src/services/driverLocationTracking';
 
 type AppUpdateInfo = {
   storeVersion?: string;
@@ -47,6 +51,12 @@ function AppContent() {
     }
     tokenn()
     checkForAppUpdate().then(setUpdateInfo)
+
+    // Mounted once, unconditionally - the service itself checks AsyncStorage
+    // on every tick and no-ops when there is no session, so it stays correct
+    // across logout/login without needing this effect to react to auth state.
+    startDriverLocationTracking();
+    return () => stopDriverLocationTracking();
   }, [])
 
   const handleInstallUpdate = () => {

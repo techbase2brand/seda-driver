@@ -15,6 +15,7 @@ import ActionButton from '../components/ActionButton';
 import InstructionCard from '../components/InstructionCard';
 import { supabase } from '../lib/supabase';
 import { parseCustomerDetails, buildAddressString } from '../utils';
+import { fillMissingCustomerDetails } from '../services/customerLookup';
 
 const DeliveryDetailsScreen = ({ navigation, route }) => {
   // const phoneNumber = '9876543210';
@@ -36,7 +37,8 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
       return;
     }
 
-    setOrder(data);
+    const [enriched] = await fillMissingCustomerDetails([data]);
+    setOrder(enriched);
   }, [orderId]);
 
   // Refetch every time the screen comes back into focus. Without this the
@@ -51,23 +53,7 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
 
   const customer =
     parseCustomerDetails(order?.customer_details);
-      const rawAddresses = customer?.delivery_address;
 
-  // always convert to array
-  const deliveryAddresses = Array.isArray(rawAddresses)
-    ? rawAddresses
-    : rawAddresses
-    ? [rawAddresses]
-    : [];
-
-  const selectedAddress =
-    deliveryAddresses.length === 1
-      ? deliveryAddresses[0]
-      : deliveryAddresses.find(addr => addr?.isSelected === true);
-  // const selectedAddress = customer?.delivery_address?.find(
-  //   item => item?.isSelected === true,
-  // );
-  // console.log('selectedAddress>>', customer, selectedAddress);
   const formatDate = dateString => {
     if (!dateString) return '-';
 
@@ -112,16 +98,16 @@ const DeliveryDetailsScreen = ({ navigation, route }) => {
     //   );
   };
 
-  // customer_details is sometimes empty even though the order itself carries a
-  // delivery_address. The order card already falls back to it, so the details
-  // screen and the Navigate button must do the same - otherwise the map says
-  // "No delivery address was found" for an order that does have one.
+  // The order's own delivery_address is the definitive one for this order -
+  // customer?.delivery_address is just the customer's profile default(s),
+  // which can point somewhere else entirely (e.g. a different isSelected
+  // address by the time this order is viewed). Only fall back to the profile
+  // address for legacy orders that have no delivery_address of their own.
   const phoneNumber = String(customer?.phone ?? '').trim();
 
   const deliveryAddress =
-    buildAddressString(selectedAddress) ||
-    buildAddressString(customer?.delivery_address) ||
-    buildAddressString(order?.delivery_address);
+    buildAddressString(order?.delivery_address) ||
+    buildAddressString(customer?.delivery_address);
 
   const isDelivered = order?.deliveryStatus === 'completed';
 

@@ -14,14 +14,35 @@ export const heightPercentageToDP = heightPercent => {
 };
 
 /**
- * Shows the order number exactly as the backend stores it.
- * This used to cut it down to the last 6 characters, which is why the driver
- * app and the customer app showed different numbers for the same order - the
- * two of them could not read the same number out to each other on a call.
+ * Shortens the order number for display: keeps the ORD- prefix and the last
+ * 6 characters of what follows.
+ *
+ * This used to be unconditional (no truncation at all), specifically to fix
+ * a mismatch bug: the driver app truncated while the customer app showed a
+ * different number for the same order, so the two could not read the same
+ * number out to each other on a call. That is still true today - the
+ * customer app has not been changed to match - so truncating here again
+ * reopens that mismatch. This is a deliberate, informed call to shorten the
+ * driver app's own display (reorders can produce a 24+ character
+ * `ORD-<timestamp>-<random>` name), not a reversal of the earlier finding.
+ * The real fix is still the agreed step 2: a short, stable `order_number`
+ * column both apps read from - see the driver-app/customer-app conversation
+ * about `orders.order_name` vs a future `orders.order_number`.
  */
 export const formatOrderName = (orderName: any): string => {
   if (!orderName) return '-';
-  return String(orderName).trim() || '-';
+
+  const value = String(orderName).trim();
+  const lower = value.toLowerCase();
+
+  if (lower.startsWith('ord-') || lower.startsWith('ord')) {
+    const afterOrd = lower.startsWith('ord-') ? value.slice(4) : value.slice(3);
+    const rest = afterOrd.startsWith('-') ? afterOrd.slice(1) : afterOrd;
+    const shortRest = rest.length > 6 ? rest.slice(-6) : rest;
+    return `ORD-${shortRest}`;
+  }
+
+  return value.length > 6 ? value.slice(-6) : value;
 };
 
 /**
@@ -83,4 +104,28 @@ export const buildCustomerName = (customer: any): string => {
     .map((part: any) => (part == null ? '' : String(part).trim()))
     .filter(Boolean)
     .join(' ');
+};
+
+/**
+ * True when two dates fall on the same calendar day, comparing by local
+ * year/month/date rather than raw timestamps - `delivery_date` in the
+ * database is stored at local midnight, so comparing full Date objects (or
+ * their string form) would miss on timezone/millisecond differences that
+ * don't actually matter for a "is this today's order" check.
+ */
+export const isSameCalendarDay = (a: any, b: any): boolean => {
+  if (!a || !b) return false;
+
+  const dateA = a instanceof Date ? a : new Date(a);
+  const dateB = b instanceof Date ? b : new Date(b);
+
+  if (Number.isNaN(dateA.getTime()) || Number.isNaN(dateB.getTime())) {
+    return false;
+  }
+
+  return (
+    dateA.getFullYear() === dateB.getFullYear() &&
+    dateA.getMonth() === dateB.getMonth() &&
+    dateA.getDate() === dateB.getDate()
+  );
 };

@@ -19,6 +19,9 @@ import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import { ACTIVE_DELIVERIES } from '../constants/Constants';
+import { useDriverLocationTrackingStatus } from '../services/driverLocationTracking';
+import { isSameCalendarDay } from '../utils';
+import { fillMissingCustomerDetails } from '../services/customerLookup';
 
 const OrderSection = ({ title, data, navigation }) => {
   if (!data.length) return null;
@@ -49,6 +52,8 @@ const DeliveriesScreen = ({ navigation }) => {
   const [driverId, setDriverId] = useState(null);
   const [franchiseId, setFranchiseId] = useState(null);
   const [markAllOrder, setMarkAllOrder] = useState(false);
+  const [selectedTab, setSelectedTab] = useState('today'); // 'today' | 'delivered' | 'tomorrow'
+  const locationTracking = useDriverLocationTrackingStatus();
 
   const loadIdsFromStorage = useCallback(async () => {
     const token = await AsyncStorage.getItem('token');
@@ -71,32 +76,6 @@ const DeliveriesScreen = ({ navigation }) => {
 
     return { dIdNum, fIdClean };
   }, []);
-  const sortOrdersByStatus = ordersList => {
-    if (!Array.isArray(ordersList)) return [];
-
-    const getPriority = status => {
-      if (status === 'completed') return 3;
-      if (status === 'unable to deliver') return 2;
-      return 1; // in transit / pending
-    };
-
-    return [...ordersList].sort((a, b) => {
-      //  status priority
-      const statusDiff =
-        getPriority(a.deliveryStatus) - getPriority(b.deliveryStatus);
-
-      if (statusDiff !== 0) {
-        return statusDiff;
-      }
-
-      //  same status → sort by stop_number
-      const stopA = a.stop_number ?? 0;
-      const stopB = b.stop_number ?? 0;
-
-      return stopA - stopB;
-    });
-  };
-
   const fetchOrders = useCallback(
     async ({ dIdNum, fIdClean } = {}) => {
       try {
@@ -141,9 +120,7 @@ const DeliveriesScreen = ({ navigation }) => {
           return;
         }
         console.log('Orders fetch:', data);
-
-        const sortedOrders = sortOrdersByStatus(data);
-        setOrders(data);
+        setOrders(await fillMissingCustomerDetails(data));
       } catch (e) {
         console.log('fetchOrders exception:', e);
         setOrders([]);
@@ -249,12 +226,18 @@ const DeliveriesScreen = ({ navigation }) => {
     todaycompleted: todayCompletedCount,
   };
 
+  const tabEmptyMessage = {
+    today: 'No orders scheduled for today',
+    delivered: 'No orders delivered yet',
+    tomorrow: 'No orders scheduled for tomorrow',
+  };
+
   const renderEmpty = () => {
     if (loading) return null;
 
     return (
       <View style={styles.emptyWrap}>
-        <Text style={styles.emptyText}>No orders assigned yet</Text>
+        <Text style={styles.emptyText}>{tabEmptyMessage[selectedTab]}</Text>
       </View>
     );
   };
@@ -276,24 +259,44 @@ const DeliveriesScreen = ({ navigation }) => {
     });
   };
 
-  const activeOrdersRaw = orders.filter(
+  // The three stat tabs above (Today's / Delivered / Tomorrow's) both count
+  // and filter - the card list below always reflects whichever one is
+  // selected, instead of always showing every order the driver has ever had
+  // assigned to them. Reuses the `today` declared above for totaldeliveries.
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const ordersForSelectedTab = orders.filter(item => {
+    if (selectedTab === 'delivered') {
+      return item.deliveryStatus === 'completed';
+    }
+    const targetDay = selectedTab === 'tomorrow' ? tomorrow : today;
+    return isSameCalendarDay(item.delivery_date, targetDay);
+  });
+
+  const activeOrdersRaw = ordersForSelectedTab.filter(
     item =>
       item.deliveryStatus !== 'unable to deliver' &&
       item.deliveryStatus !== 'completed',
   );
 
   const activeOrders = sortActiveWithStop(activeOrdersRaw);
-  const undeliveredOrders = orders?.filter(
+  const undeliveredOrders = ordersForSelectedTab?.filter(
     item => item.deliveryStatus === 'unable to deliver',
   );
 
-  const completedOrdersList = orders?.filter(
+  const completedOrdersList = ordersForSelectedTab?.filter(
     item => item.deliveryStatus === 'completed',
   );
 
-  // Calculate eligible orders for MarkAllTransitCard (same logic as in MarkAllTransitCard component)
+  // Calculate eligible orders for MarkAllTransitCard (same logic as in
+  // MarkAllTransitCard component). Scoped to today's date regardless of
+  // which tab is being viewed - bulk-starting a route is inherently a
+  // "today" action, and used to be able to sweep up a future day's order
+  // that happened to already be in 'driver assigned' status.
   const eligibleOrders = orders?.filter(
     o =>
+      isSameCalendarDay(o.delivery_date, today) &&
       o.deliveryStatus !== 'completed' &&
       o.deliveryStatus !== 'unable to deliver' &&
       o.deliveryStatus !== 'in transit',
@@ -312,6 +315,7 @@ const DeliveriesScreen = ({ navigation }) => {
         <DeliveriesHeader
           navigation={navigation}
           totaldeliveries={totaldeliveries}
+          hasEligibleOrders={hasEligibleOrders}
         />
         {hasEligibleOrders && (
           <View style={{ position: 'absolute', top: '63%' }}>
@@ -329,7 +333,25 @@ const DeliveriesScreen = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        <DeliveryStats orders={orders} />
+        {locationTracking.active && (
+          <View style={styles.trackingBanner}>
+            <View style={styles.trackingDot} />
+            <Text style={styles.trackingText}>
+              Sharing live location for order
+              {locationTracking.orderIds.length > 1 ? 's' : ''}{' '}
+              {locationTracking.orderIds.join(', ')}
+              {locationTracking.lastPingAt
+                ? ` · last update ${locationTracking.lastPingAt.toLocaleTimeString()}`
+                : ''}
+            </Text>
+          </View>
+        )}
+
+        <DeliveryStats
+          orders={orders}
+          selectedTab={selectedTab}
+          onSelectTab={setSelectedTab}
+        />
 
         <View style={{ padding: 16, flex: 1 }}>
           {/* <Text style={styles.title}>Active Deliveries</Text> */}
@@ -355,7 +377,11 @@ const DeliveriesScreen = ({ navigation }) => {
             // />
             <>
               <OrderSection
-                title="Active Deliveries"
+                title={
+                  selectedTab === 'tomorrow'
+                    ? 'Scheduled for Tomorrow'
+                    : 'Active Deliveries'
+                }
                 data={activeOrders}
                 navigation={navigation}
               />
@@ -369,7 +395,7 @@ const DeliveriesScreen = ({ navigation }) => {
                 data={completedOrdersList}
                 navigation={navigation}
               />
-              {!orders.length && renderEmpty()}
+              {!ordersForSelectedTab.length && renderEmpty()}
             </>
           )}
         </View>
@@ -383,6 +409,30 @@ export default DeliveriesScreen;
 const styles = StyleSheet.create({
   container: { flex: 1 },
   title: { fontSize: 18, fontWeight: '600', marginBottom: 12, fontFamily: fontFamilyHeading },
+
+  trackingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#E8F8EF',
+  },
+  trackingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#16A34A',
+  },
+  trackingText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#16A34A',
+    fontFamily: fontFamilyBody,
+  },
 
   loaderWrap: {
     // flex: 1,

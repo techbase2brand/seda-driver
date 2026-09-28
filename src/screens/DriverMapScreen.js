@@ -302,82 +302,14 @@ import { fontFamilyHeading } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
 import { GOOGLE_MAPS_APIKEY } from '../constants/Constants';
 import { buildAddressString } from '../utils';
-
-const IOS_PERMISSION_TIMEOUT_MS = 15000;
-
-async function requestIOSLocationPermission() {
-  if (Platform.OS !== 'ios') {
-    return true;
-  }
-
-  Geolocation.setRNConfiguration({
-    skipPermissionRequests: false,
-    authorizationLevel: 'always',
-  });
-
-  return new Promise(resolve => {
-    let settled = false;
-
-    const finish = value => {
-      if (settled) {
-        return;
-      }
-      settled = true;
-      clearTimeout(timer);
-      resolve(value);
-    };
-
-    // iOS does not always invoke either callback - most commonly when the user
-    // picks "Allow While Using App" while we asked for "always". Without this
-    // timeout the promise never settles and the disclosure modal stays on
-    // screen with no way out (the driver has to force-quit the app).
-    // Resolving true lets the driver continue: if location really is blocked,
-    // fetchLocationWithFallback below fails and shows the proper error.
-    const timer = setTimeout(() => finish(true), IOS_PERMISSION_TIMEOUT_MS);
-
-    Geolocation.requestAuthorization(
-      () => finish(true),
-      () => finish(false),
-    );
-  });
-}
-
-/** True when Android foreground location is already granted. */
-async function hasForegroundLocation() {
-  if (Platform.OS !== 'android') {
-    return false;
-  }
-
-  const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
-  const coarse = PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION;
-  return (
-    (await PermissionsAndroid.check(fine)) ||
-    (await PermissionsAndroid.check(coarse))
-  );
-}
-
-async function requestAndroidLocationPermission() {
-  if (Platform.OS !== 'android') {
-    return true;
-  }
-  const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
-  const coarse = PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION;
-  const result = await PermissionsAndroid.requestMultiple([fine, coarse]);
-  return (
-    result[fine] === PermissionsAndroid.RESULTS.GRANTED ||
-    result[coarse] === PermissionsAndroid.RESULTS.GRANTED
-  );
-}
-
-/** True when Android background location is already granted, or not needed. */
-async function hasBackgroundLocation() {
-  if (Platform.OS !== 'android' || Platform.Version < 29) {
-    return true;
-  }
-  return PermissionsAndroid.check(
-    PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
-  );
-}
+import {
+  requestIOSLocationPermission,
+  hasForegroundLocation,
+  requestAndroidLocationPermission,
+  hasBackgroundLocation,
+  requestBackgroundLocationPermission,
+  fetchLocationWithFallback,
+} from '../utils/locationPermissions';
 
 /** Rejects if a promise never settles, so the UI can never hang forever. */
 const withTimeout = (promise, ms, label) =>
@@ -410,36 +342,6 @@ const distanceInMetres = (a, b) => {
 // marker follows every GPS tick, but redrawing the route on every tick would
 // fire a Directions request every couple of seconds while driving.
 const ROUTE_REFRESH_METRES = 150;
-
-const getCurrentPositionAsync = options =>
-  new Promise((resolve, reject) => {
-    Geolocation.getCurrentPosition(resolve, reject, options);
-  });
-
-/** GPS first, then network / cached — helps Android indoors. */
-/**
- * Gets a position fast enough to draw the route.
- * A coarse or cached fix is plenty for the map origin - watchPosition below
- * refines it within seconds. Asking for high accuracy first meant waiting up
- * to 25s for a GPS lock (and 45s in total when it timed out), which is why the
- * map felt stuck on the loading spinner, especially indoors on Android.
- */
-async function fetchLocationWithFallback() {
-  try {
-    return await getCurrentPositionAsync({
-      enableHighAccuracy: false,
-      timeout: 8000,
-      maximumAge: 600000,
-    });
-  } catch (e1) {
-    console.log('DriverMap: no quick fix available, trying GPS', e1);
-    return await getCurrentPositionAsync({
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0,
-    });
-  }
-}
 
 const DriverMapScreen = ({ navigation, route }) => {
   const mapRef = useRef(null);
@@ -569,17 +471,6 @@ const DriverMapScreen = ({ navigation, route }) => {
     });
   }, [currentLocation, destination]);
 
-  const requestBackgroundLocationPermission = useCallback(async () => {
-    if (Platform.OS !== 'android' || Platform.Version < 29) {
-      return PermissionsAndroid.RESULTS.GRANTED;
-    }
-
-    const backgroundPermission =
-      PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION;
-
-    return PermissionsAndroid.request(backgroundPermission);
-  }, []);
-
   useEffect(() => {
     return () => {
       mountedRef.current = false;
@@ -626,32 +517,6 @@ const DriverMapScreen = ({ navigation, route }) => {
         }
       }
 
-      // 2. Background location - Android only, and optional.
-      //    We ask only while the permission is still missing: once the driver
-      //    allows it, hasBackgroundLocation() is true and the sheet never
-      //    appears again. If they decline we do ask next time, so nobody who
-      //    said yes gets nagged and nobody who said no is silently dropped.
-      if (Platform.OS === 'android' && !(await hasBackgroundLocation())) {
-        const consentGiven = await askLocationDisclosureConsent();
-
-        if (consentGiven) {
-          const result = await requestBackgroundLocationPermission();
-
-          if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
-            // Android will not show its dialog any more, so our sheet alone
-            // would be a dead end. Point them at Settings instead.
-            Alert.alert(
-              'Allow background location',
-              'Android has stopped asking for this permission. To turn on live tracking, open Settings > Apps > Coconut Driver > Permissions > Location and choose "Allow all the time".',
-            );
-          } else if (result !== PermissionsAndroid.RESULTS.GRANTED) {
-            console.log(
-              'DriverMap: background location declined - live tracking will only run while the app is open',
-            );
-          }
-        }
-      }
-
       // The native callbacks are not guaranteed to fire (a simulator with no
       // location set never calls back at all), so race our own deadline -
       // otherwise the screen sits on the spinner for ever with no error.
@@ -679,10 +544,42 @@ const DriverMapScreen = ({ navigation, route }) => {
       await geoPromise.catch(() => {});
       setLoading(false);
     }
+
+    // Background location - Android only, and optional. Asked only after the
+    // map has already loaded, so this consent sheet (which waits on the
+    // driver to tap Allow/Not now, and used to run before the location fetch
+    // even started) never holds up the spinner. We ask only while the
+    // permission is still missing: once the driver allows it,
+    // hasBackgroundLocation() is true and the sheet never appears again. If
+    // they decline we do ask next time, so nobody who said yes gets nagged
+    // and nobody who said no is silently dropped.
+    if (
+      mountedRef.current &&
+      Platform.OS === 'android' &&
+      !(await hasBackgroundLocation())
+    ) {
+      const consentGiven = await askLocationDisclosureConsent();
+
+      if (consentGiven) {
+        const result = await requestBackgroundLocationPermission();
+
+        if (result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN) {
+          // Android will not show its dialog any more, so our sheet alone
+          // would be a dead end. Point them at Settings instead.
+          Alert.alert(
+            'Allow background location',
+            'Android has stopped asking for this permission. To turn on live tracking, open Settings > Apps > Coconut Driver > Permissions > Location and choose "Allow all the time".',
+          );
+        } else if (result !== PermissionsAndroid.RESULTS.GRANTED) {
+          console.log(
+            'DriverMap: background location declined - live tracking will only run while the app is open',
+          );
+        }
+      }
+    }
   }, [
     deliveryAddress,
     getCoordinatesFromAddress,
-    requestBackgroundLocationPermission,
     askLocationDisclosureConsent,
   ]);
 
@@ -706,9 +603,18 @@ const DriverMapScreen = ({ navigation, route }) => {
         // Redraw the route only once the driver has actually moved a block or
         // so. This is what makes the route follow the driver instead of
         // staying on the line drawn when the screen opened.
-        setRouteOrigin(prev =>
-          distanceInMetres(prev, next) > ROUTE_REFRESH_METRES ? next : prev,
-        );
+        setRouteOrigin(prev => {
+          const moved = distanceInMetres(prev, next);
+          if (moved > ROUTE_REFRESH_METRES) {
+            console.log(
+              'DriverMap: route origin refreshed, moved',
+              Math.round(moved),
+              'm',
+            );
+            return next;
+          }
+          return prev;
+        });
 
         await saveLocationToSupabase(latitude, longitude);
       },

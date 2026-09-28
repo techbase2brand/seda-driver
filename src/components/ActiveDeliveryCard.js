@@ -38,9 +38,14 @@ const ActiveDeliveryCard = ({ item, navigation }) => {
       ? customerName
       : '';
 
+  // The order's own delivery_address is definitive for this order -
+  // companyDetail?.delivery_address is just the customer's profile
+  // default(s), which can point somewhere else entirely. Only fall back to
+  // the profile address for legacy orders with no delivery_address of their
+  // own.
   const addressLabel =
-    buildAddressString(companyDetail?.delivery_address) ||
-    buildAddressString(item?.delivery_address);
+    buildAddressString(item?.delivery_address) ||
+    buildAddressString(companyDetail?.delivery_address);
 
   const status = (item?.deliveryStatus || '').toLowerCase().trim();
 
