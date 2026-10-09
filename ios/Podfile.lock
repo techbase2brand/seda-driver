@@ -1894,6 +1894,8 @@ PODS:
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
     - SocketRocket
+  - react-native-background-actions (4.1.0):
+    - React-Core
   - react-native-blob-util (0.24.6):
     - boost
     - DoubleConversion
@@ -2875,6 +2877,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-background-actions (from `../node_modules/react-native-background-actions`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - "react-native-geolocation (from `../node_modules/@react-native-community/geolocation`)"
   - react-native-image-picker (from `../node_modules/react-native-image-picker`)
@@ -3015,6 +3018,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-background-actions:
+    :path: "../node_modules/react-native-background-actions"
   react-native-blob-util:
     :path: "../node_modules/react-native-blob-util"
   react-native-geolocation:
@@ -3149,6 +3154,7 @@ SPEC CHECKSUMS:
   React-logger: 9e597cbeda7b8cc8aa8fb93860dade97190f69cc
   React-Mapbuffer: a1ac1f8640a6ab91429b48f8849cdf090c1d3778
   React-microtasksnativemodule: d1b99ceae24a3d6db4720504626722584f589d18
+  react-native-background-actions: 35a1e298faed0957d36469eb21d634f0b6243bcb
   react-native-blob-util: 257729f1623417c5c65675af05f80541d0b4095c
   react-native-geolocation: 49d39b53dfeb6c22ff1ad69e71ac9c7981affdaa
   react-native-image-picker: 6051cfd030121b880a58f1cc0e5e33e9887804e4

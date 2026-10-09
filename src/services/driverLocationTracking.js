@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Alert, Platform, PermissionsAndroid } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BackgroundService from 'react-native-background-actions';
+import Geolocation from '@react-native-community/geolocation';
 import { supabase } from '../lib/supabase';
 import {
   requestIOSLocationPermission,
@@ -10,6 +12,18 @@ import {
   requestBackgroundLocationPermission,
   fetchLocationWithFallback,
 } from '../utils/locationPermissions';
+
+// A cached fix is fine for showing a map once, but while driving it would put
+// the driver where they were minutes ago - so tracking asks for a fresh one
+// first and only falls back to the cached path if GPS cannot answer in time.
+const getFreshPosition = () =>
+  new Promise((resolve, reject) => {
+    Geolocation.getCurrentPosition(resolve, reject, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 5000,
+    });
+  }).catch(() => fetchLocationWithFallback());
 
 /**
  * Background driver-location tracking.
@@ -46,6 +60,77 @@ let status = {
 };
 
 const listeners = new Set();
+
+// Keeps the process (and its JS timers) alive while the app is minimised.
+// Android: a foreground service with a persistent notification. iOS: an open
+// location watch, which with the "location" background mode keeps the app
+// running. Without this the 12s timer below simply freezes once the driver
+// leaves the app, and the customer's map stops moving.
+let iosKeepAliveWatchId = null;
+let androidServiceStopper = null;
+
+const BACKGROUND_SERVICE_OPTIONS = {
+  taskName: 'DriverLocationTracking',
+  taskTitle: 'Coconut Driver',
+  taskDesc: 'Sharing your location with customers while orders are in transit',
+  taskIcon: { name: 'ic_launcher', type: 'mipmap' },
+  color: '#0a24a7',
+  // Must match android:foregroundServiceType in the manifest - without it
+  // Android 14+ kills the app with InvalidForegroundServiceTypeException.
+  foregroundServiceType: ['location'],
+};
+
+async function startKeepAlive() {
+  if (Platform.OS === 'ios') {
+    if (iosKeepAliveWatchId == null) {
+      iosKeepAliveWatchId = Geolocation.watchPosition(
+        () => {},
+        err => console.log('driverLocationTracking: keep-alive watch', err),
+        { enableHighAccuracy: true, distanceFilter: 50 },
+      );
+    }
+    return;
+  }
+
+  if (androidServiceStopper || BackgroundService.isRunning()) {
+    return;
+  }
+
+  try {
+    if (Platform.Version >= 33) {
+      await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      );
+    }
+    // The task just parks until stopKeepAlive() - the actual work stays in
+    // tick(), whose timer keeps firing while this headless task is alive.
+    await BackgroundService.start(
+      () =>
+        new Promise(resolve => {
+          androidServiceStopper = resolve;
+        }),
+      BACKGROUND_SERVICE_OPTIONS,
+    );
+  } catch (err) {
+    androidServiceStopper = null;
+    console.log('driverLocationTracking: could not start foreground service', err);
+  }
+}
+
+async function stopKeepAlive() {
+  if (iosKeepAliveWatchId != null) {
+    Geolocation.clearWatch(iosKeepAliveWatchId);
+    iosKeepAliveWatchId = null;
+  }
+
+  if (androidServiceStopper) {
+    androidServiceStopper();
+    androidServiceStopper = null;
+  }
+  if (Platform.OS === 'android' && BackgroundService.isRunning()) {
+    await BackgroundService.stop().catch(() => {});
+  }
+}
 
 function publish(next) {
   status = { ...status, ...next };
@@ -135,6 +220,7 @@ async function tick() {
     const driverId = driverIdRaw ? Number(driverIdRaw) : null;
 
     if (!token || !driverId) {
+      await stopKeepAlive();
       publish({ active: false, orderIds: [], lastError: null });
       return;
     }
@@ -142,6 +228,7 @@ async function tick() {
     const orderIds = await fetchInTransitOrderIds(driverId);
 
     if (orderIds.length === 0) {
+      await stopKeepAlive();
       publish({ active: false, orderIds: [], lastError: null });
       return;
     }
@@ -156,13 +243,15 @@ async function tick() {
       return;
     }
 
+    await startKeepAlive();
+
     // Best-effort: never let a background-permission prompt block sending the
     // foreground location update below.
     ensureBackgroundPermissionBestEffort().catch(err =>
       console.log('driverLocationTracking: background permission step failed', err),
     );
 
-    const position = await fetchLocationWithFallback();
+    const position = await getFreshPosition();
     const { latitude, longitude } = position.coords;
 
     const rows = orderIds.map(orderId => ({
@@ -209,11 +298,20 @@ export function startDriverLocationTracking() {
   intervalId = setInterval(tick, TICK_INTERVAL_MS);
 }
 
+/**
+ * Call right after orders are marked 'in transit' so the customer's map gets
+ * the first position straight away instead of up to 12s later.
+ */
+export function triggerDriverLocationTrackingNow() {
+  tick();
+}
+
 export function stopDriverLocationTracking() {
   if (intervalId) {
     clearInterval(intervalId);
     intervalId = null;
   }
+  stopKeepAlive();
   hasAskedForegroundThisSession = false;
   hasAskedBackgroundThisSession = false;
   publish({ active: false, orderIds: [], lastPingAt: null, lastError: null });

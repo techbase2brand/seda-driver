@@ -5,6 +5,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Colors from '../constants/Color';
 import { fontFamilyHeading, fontFamilyBody } from '../constants/Fonts';
 import { supabase } from '../lib/supabase';
+import { triggerDriverLocationTrackingNow } from '../services/driverLocationTracking';
 
 const MarkAllTransitCard = ({ orders = [], setMarkAllOrder, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,8 @@ const MarkAllTransitCard = ({ orders = [], setMarkAllOrder, onSuccess }) => {
       setMarkAllOrder(true);
       if (error) {
         console.log('MARK TRANSIT ERROR:', error);
+      } else {
+        triggerDriverLocationTrackingNow();
       }
 
       setShowConfirm(false);

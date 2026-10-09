@@ -282,7 +282,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = sedadriverapp/sedadriverapp.entitlements;
-				CURRENT_PROJECT_VERSION = 1.6;
+				CURRENT_PROJECT_VERSION = 1.7;
 				DEVELOPMENT_TEAM = 22STXQ9S26;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = sedadriverapp/Info.plist;
@@ -291,7 +291,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.7;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -317,7 +317,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = sedadriverapp/sedadriverapp.entitlements;
-				CURRENT_PROJECT_VERSION = 1.6;
+				CURRENT_PROJECT_VERSION = 1.7;
 				DEVELOPMENT_TEAM = 22STXQ9S26;
 				INFOPLIST_FILE = sedadriverapp/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
@@ -325,7 +325,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.6;
+				MARKETING_VERSION = 1.7;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
