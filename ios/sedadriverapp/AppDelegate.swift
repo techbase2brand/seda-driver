@@ -15,6 +15,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // Resume native location sharing right away - this is also the path iOS
+    // takes when it relaunches a swipe-killed app for a location event.
+    DriverLocationTracker.shared.resumeIfEnabled()
+
     let delegate = ReactNativeDelegate()
     // GMSServices.provideAPIKey("AIzaSyBXNyT9zcGdvhAUCUEYTm6e_qPw26AOPgI")
     let factory = RCTReactNativeFactory(delegate: delegate)

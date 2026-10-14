@@ -1,29 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Alert, Platform, PermissionsAndroid } from 'react-native';
+import { Alert, Platform, PermissionsAndroid, NativeModules } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BackgroundService from 'react-native-background-actions';
-import Geolocation from '@react-native-community/geolocation';
-import { supabase } from '../lib/supabase';
+import { supabase, SUPABASE_URL, SUPABASE_ANON_KEY } from '../lib/supabase';
 import {
   requestIOSLocationPermission,
   hasForegroundLocation,
   requestAndroidLocationPermission,
   hasBackgroundLocation,
   requestBackgroundLocationPermission,
-  fetchLocationWithFallback,
 } from '../utils/locationPermissions';
-
-// A cached fix is fine for showing a map once, but while driving it would put
-// the driver where they were minutes ago - so tracking asks for a fresh one
-// first and only falls back to the cached path if GPS cannot answer in time.
-const getFreshPosition = () =>
-  new Promise((resolve, reject) => {
-    Geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 5000,
-    });
-  }).catch(() => fetchLocationWithFallback());
 
 /**
  * Background driver-location tracking.
@@ -61,74 +46,36 @@ let status = {
 
 const listeners = new Set();
 
-// Keeps the process (and its JS timers) alive while the app is minimised.
-// Android: a foreground service with a persistent notification. iOS: an open
-// location watch, which with the "location" background mode keeps the app
-// running. Without this the 12s timer below simply freezes once the driver
-// leaves the app, and the customer's map stops moving.
-let iosKeepAliveWatchId = null;
-let androidServiceStopper = null;
+// Both platforms upload natively (DriverLocationService.kt on Android,
+// DriverLocationTracker.swift on iOS): GPS + Supabase upload happen outside
+// JS, so they survive the app being minimised or swiped away. JS only
+// starts/stops them and keeps them in sync with the in-transit orders.
+const DriverLocation = NativeModules.DriverLocation;
+const BATTERY_PROMPT_KEY = 'battery_prompt_shown';
 
-const BACKGROUND_SERVICE_OPTIONS = {
-  taskName: 'DriverLocationTracking',
-  taskTitle: 'Coconut Driver',
-  taskDesc: 'Sharing your location with customers while orders are in transit',
-  taskIcon: { name: 'ic_launcher', type: 'mipmap' },
-  color: '#0a24a7',
-  // Must match android:foregroundServiceType in the manifest - without it
-  // Android 14+ kills the app with InvalidForegroundServiceTypeException.
-  foregroundServiceType: ['location'],
-};
+async function startNativeService(driverId) {
+  await DriverLocation.start(SUPABASE_URL, SUPABASE_ANON_KEY, driverId);
 
-async function startKeepAlive() {
-  if (Platform.OS === 'ios') {
-    if (iosKeepAliveWatchId == null) {
-      iosKeepAliveWatchId = Geolocation.watchPosition(
-        () => {},
-        err => console.log('driverLocationTracking: keep-alive watch', err),
-        { enableHighAccuracy: true, distanceFilter: 50 },
-      );
-    }
+  if (Platform.OS !== 'android' || (await AsyncStorage.getItem(BATTERY_PROMPT_KEY))) {
     return;
   }
-
-  if (androidServiceStopper || BackgroundService.isRunning()) {
+  if (await DriverLocation.isIgnoringBatteryOptimizations()) {
     return;
   }
-
-  try {
-    if (Platform.Version >= 33) {
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
-      );
-    }
-    // The task just parks until stopKeepAlive() - the actual work stays in
-    // tick(), whose timer keeps firing while this headless task is alive.
-    await BackgroundService.start(
-      () =>
-        new Promise(resolve => {
-          androidServiceStopper = resolve;
-        }),
-      BACKGROUND_SERVICE_OPTIONS,
-    );
-  } catch (err) {
-    androidServiceStopper = null;
-    console.log('driverLocationTracking: could not start foreground service', err);
-  }
+  await AsyncStorage.setItem(BATTERY_PROMPT_KEY, '1');
+  Alert.alert(
+    'Keep location sharing on',
+    'Some phones stop apps running in the background to save battery. To keep sharing your location with customers during deliveries, set Battery for Coconut Driver to "Unrestricted" (or "Don\'t optimise").',
+    [
+      { text: 'Later', style: 'cancel' },
+      { text: 'Open settings', onPress: () => DriverLocation.openBatterySettings() },
+    ],
+  );
 }
 
 async function stopKeepAlive() {
-  if (iosKeepAliveWatchId != null) {
-    Geolocation.clearWatch(iosKeepAliveWatchId);
-    iosKeepAliveWatchId = null;
-  }
-
-  if (androidServiceStopper) {
-    androidServiceStopper();
-    androidServiceStopper = null;
-  }
-  if (Platform.OS === 'android' && BackgroundService.isRunning()) {
-    await BackgroundService.stop().catch(() => {});
+  if (DriverLocation) {
+    await DriverLocation.stop().catch(() => {});
   }
 }
 
@@ -243,37 +190,10 @@ async function tick() {
       return;
     }
 
-    await startKeepAlive();
-
-    // Best-effort: never let a background-permission prompt block sending the
-    // foreground location update below.
+    // Uploads happen natively; just make sure the native tracker is running.
+    await startNativeService(driverId);
     ensureBackgroundPermissionBestEffort().catch(err =>
       console.log('driverLocationTracking: background permission step failed', err),
-    );
-
-    const position = await getFreshPosition();
-    const { latitude, longitude } = position.coords;
-
-    const rows = orderIds.map(orderId => ({
-      order_id: orderId,
-      driver_id: driverId,
-      latitude,
-      longitude,
-      updated_at: new Date().toISOString(),
-    }));
-
-    const { error: upsertError } = await supabase
-      .from('driver_locations')
-      .upsert(rows, { onConflict: 'order_id' });
-
-    if (upsertError) {
-      console.log('driverLocationTracking: upsert failed', upsertError);
-      publish({ active: true, orderIds, lastError: upsertError.message });
-      return;
-    }
-
-    console.log(
-      `driverLocationTracking: sent (${latitude.toFixed(5)}, ${longitude.toFixed(5)}) for order(s) ${orderIds.join(', ')}`,
     );
     publish({
       active: true,

@@ -82,8 +82,8 @@ android {
         applicationId "com.sedadriverapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 16
-        versionName "16.0"
+        versionCode 19
+        versionName "19.0"
     }
     signingConfigs {
         debug {
@@ -116,6 +116,7 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

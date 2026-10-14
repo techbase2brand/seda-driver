@@ -36,7 +36,9 @@
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true">
       <service
-        android:name="com.asterinet.react.bgactions.RNBackgroundActionsTask"
+        android:name=".DriverLocationService"
+        android:exported="false"
+        android:stopWithTask="false"
         android:foregroundServiceType="location" />
       <activity
         android:name=".MainActivity"
